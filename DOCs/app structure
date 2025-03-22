@@ -1,0 +1,103 @@
+StudyVerse/
+├── App.js                     // Entry point of the application
+├── app.json                    // Expo configuration file
+├── babel.config.js              // Babel configuration
+├── package.json                // Project dependencies and scripts
+├── tsconfig.json              // Typescript configuration
+├── .env                       // Environment variables (API keys, etc.) - IMPORTANT: Add to .gitignore
+├── .gitignore                  // Git ignore file
+
+├── assets/                    // Static assets (images, fonts, etc.)
+│   ├── images/
+│   │   ├── logo.png
+│   │   ├── avatar.png
+│   │   └── ...
+│   ├── fonts/
+│   │   ├── OpenSans-Regular.ttf
+│   │   └── OpenSans-Bold.ttf
+│   └── ...
+
+├── components/                // Reusable UI components
+│   ├── Button.js               // Custom button component
+│   ├── Input.js                // Custom input component
+│   ├── Card.js                 // Reusable card component
+│   ├── Header.js               // App header component
+│   ├── Footer.js               // App footer component
+│   ├── LoadingIndicator.js     // Loading spinner component
+│   ├── ErrorMessage.js         // Display error messages
+│   └── ...
+
+├── constants/                 // Constant values (colors, sizes, etc.)
+│   ├── Colors.js             // Color palette
+│   ├── Layout.js             // Screen dimensions, padding, etc.
+│   └── API.js                // API endpoints
+
+├── contexts/                  // Context providers for global state
+│   ├── AuthContext.js          // Authentication context
+│   └── ThemeContext.js         // Theme context
+
+├── hooks/                     // Custom React hooks
+│   ├── useAuth.js            // Authentication-related hooks
+│   ├── useTheme.js           // Theme-related hooks
+│   └── useAPI.js             // API fetching hook with React Query
+
+├── models/                   // Data models/types (for TypeScript)
+│   ├── User.ts                // User type definition
+│   ├── Course.ts              // Course type definition
+│   ├── Lesson.ts              // Lesson type definition
+│   └── ...
+
+├── navigation/                // Navigation configuration
+│   ├── AppNavigator.js        // Main navigator (tabs, stacks)
+│   ├── AuthNavigator.js       // Navigator for authentication screens
+│   └── navigationTheme.js   // Custom navigation theme
+
+├── screens/                   // Application screens
+│   ├── auth/                  // Authentication screens
+│   │   ├── LoginScreen.js
+│   │   ├── SignUpScreen.js
+│   │   └── ForgotPasswordScreen.js
+│   ├── main/                  // Main app screens
+│   │   ├── TutorScreen.js
+│   │   ├── CoursesScreen.js
+│   │   ├── ReviserScreen.js
+│   │   ├── PlannerScreen.js
+│   │   ├── SocialScreen.js
+│   │   └── ProfileScreen.js     // User profile screen
+│   ├── settings/              // Settings screens
+│   │   ├── SettingsScreen.js
+│   │   ├── ThemeSettingsScreen.js
+│   │   └── ...
+│   └── ...
+
+├── services/                  // API service layer (React Query)
+│   ├── authService.js        // Authentication API calls
+│   ├── courseService.js      // Course-related API calls
+│   ├── userService.js         // User-related API calls
+│   └── ...
+
+├── store/                    // Zustand state management
+│   ├── userStore.js           // User store
+│   ├── courseStore.js         // Course store
+│   └── themeStore.js          // Theme store
+
+├── utils/                     // Utility functions
+│   ├── DateUtils.js          // Date formatting functions
+│   ├── StringUtils.js        // String manipulation functions
+│   └── ...
+
+├── tailwind.config.js          // Tailwind CSS configuration
+├── firebaseConfig.js          // Firebase configuration
+└── graphql/
+    ├── queries/
+    |    ├── userQueries.js   // GraphQL queries related to users
+    |    ├── courseQueries.js  // GraphQL queries related to courses
+    |    └── ...
+    ├── mutations/
+    |    ├── userMutations.js // GraphQL mutations related to users
+    |    ├── courseMutations.js// GraphQL mutations related to courses
+    |    └── ...
+    ├── fragments/
+    |    ├── UserFragment.js   //Reusable User attributes for GraphQL
+    |    ├── CourseFragment.js  //Reusable Course attributes for GraphQL
+    |    └── ...
