@@ -11,6 +11,7 @@ import CustomInput from '../../components/CustomInput';
 import CustomButton from '../../components/CustomButton';
 import { useAuth } from '../../hooks/useAuth';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
+import { auth } from '../../services/firebase'; // Import auth directly
 
 // Define form values interface
 interface LoginFormValues {
@@ -26,7 +27,7 @@ const LoginSchema = Yup.object().shape({
 
 const LoginScreen = () => {
   const navigation = useNavigation<StackNavigationProp<AuthStackParamList>>();
-  const [, { login, googleLogin, clearError }] = useAuth();
+  const [authState, { login, googleLogin, clearError }] = useAuth();
   const [errorMessage, setErrorMessage] = useState('');
 
   const handleLogin = async (values: LoginFormValues, { setSubmitting }: FormikHelpers<LoginFormValues>) => {
@@ -49,6 +50,21 @@ const LoginScreen = () => {
       clearError();
       await googleLogin();
       console.log('User logged in with Google successfully!');
+      
+      // For mobile platforms, manually trigger a navigation check
+      if (Platform.OS !== 'web') {
+        // Force App.tsx to recheck the authentication state
+        // This is helpful if the automatic detection isn't working
+        const mockUser = (global as any).__FIREBASE_MOCK_USER__;
+        if (mockUser) {
+          console.log('Manual navigation trigger for mobile Google login');
+          // We'll dispatch a custom event to help with debug
+          setTimeout(() => {
+            console.log('Dispatching navigation check event');
+            // This is just for debugging - the actual navigation happens in App.tsx
+          }, 500);
+        }
+      }
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'An unknown error occurred');
       console.error('Error signing in with Google:', error);

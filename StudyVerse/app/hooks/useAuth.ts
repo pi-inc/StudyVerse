@@ -10,6 +10,7 @@ import {
   confirmPhoneVerificationCode,
   subscribeToAuthChanges,
 } from '../services/firebase';
+import { Platform } from 'react-native';
 
 interface AuthState {
   user: User | null;
@@ -110,6 +111,10 @@ export const useAuth = (): [AuthState, AuthActions] => {
     try {
       setState({ ...state, loading: true, error: null });
       await signInWithGoogle();
+      
+      // For mobile, we let App.tsx handle the auth state change
+      // All we need to do here is finish loading
+      setState({ ...state, loading: false });
     } catch (error) {
       setState({
         ...state,

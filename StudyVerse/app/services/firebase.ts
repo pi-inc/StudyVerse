@@ -83,19 +83,46 @@ export const signInWithGoogle = async (): Promise<User> => {
       return result.user;
     } else {
       // For mobile (iOS/Android), we use a mock for testing
-      // In a real app, you would use Google Sign-In native SDKs:
-      // expo-auth-session/expo-google-sign-in or @react-native-google-signin/google-signin
       console.log('Mobile Google Sign-In (Mock Implementation)');
       
-      // Mock a successful sign-in for development
+      // Check if we already have a mock user to prevent duplicate logins
+      if ((global as any).__FIREBASE_MOCK_USER__) {
+        console.log('Reusing existing mock user');
+        return (global as any).__FIREBASE_MOCK_USER__;
+      }
+      
+      // Create a simplified mock user
       const mockUser = {
         uid: 'google-mock-uid-' + Date.now(),
         displayName: 'Google User',
         email: 'google.user@example.com',
         photoURL: 'https://example.com/profile.jpg',
-      };
+        // Add minimal properties needed for the User interface
+        emailVerified: true,
+        isAnonymous: false,
+        providerData: [
+          {
+            providerId: 'google.com',
+            uid: 'mock-uid',
+            displayName: 'Google User',
+            email: 'google.user@example.com',
+            phoneNumber: null,
+            photoURL: 'https://example.com/profile.jpg',
+          }
+        ],
+        getIdToken: () => Promise.resolve('mock-id-token'),
+        reload: () => Promise.resolve(),
+        delete: () => Promise.resolve(),
+        toJSON: () => ({})
+      } as unknown as User;
       
-      return mockUser as User;
+      // Store our mock user in a global variable
+      (global as any).__FIREBASE_MOCK_USER__ = mockUser;
+      
+      // Instead of trying to trigger auth state change here, let App.tsx handle it
+      // This avoids potential race conditions and loops
+      
+      return mockUser;
     }
   } catch (error) {
     console.error('Google sign in error:', error);

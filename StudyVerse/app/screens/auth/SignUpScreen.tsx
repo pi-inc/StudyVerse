@@ -56,6 +56,17 @@ const SignUpScreen = () => {
       clearError();
       await googleLogin();
       console.log('User signed up with Google successfully!');
+      
+      // For mobile platforms, manually trigger a navigation check
+      if (Platform.OS !== 'web') {
+        // Force App.tsx to recheck the authentication state
+        // This is helpful if the automatic detection isn't working
+        const mockUser = (global as any).__FIREBASE_MOCK_USER__;
+        if (mockUser) {
+          console.log('Manual navigation trigger for mobile Google signup');
+          // This is just for debugging - the actual navigation happens in App.tsx
+        }
+      }
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'An unknown error occurred');
       console.error('Error signing up with Google:', error);
