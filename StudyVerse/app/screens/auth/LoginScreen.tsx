@@ -55,6 +55,23 @@ const LoginScreen = () => {
     }
   };
 
+  // Helper to determine if we're on mobile
+  const isMobile = Platform.OS !== 'web';
+
+  // Explanation text to show for Google login on mobile
+  const renderGoogleSignInInfo = () => {
+    if (isMobile) {
+      return (
+        <View style={styles.developmentNote}>
+          <Text style={styles.noteText}>
+            Development Mode: Mobile Google sign-in uses mock data.
+          </Text>
+        </View>
+      );
+    }
+    return null;
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
@@ -131,6 +148,8 @@ const LoginScreen = () => {
                   icon={<FontAwesome name="google" size={20} color="#6200ee" style={styles.googleIcon} />}
                   style={styles.googleButton}
                 />
+
+                {renderGoogleSignInInfo()}
 
                 <CustomButton
                   title="Login with Phone Number"
@@ -224,6 +243,17 @@ const styles = StyleSheet.create({
   },
   googleIcon: {
     marginRight: 8,
+  },
+  developmentNote: {
+    marginTop: 10,
+    padding: 10,
+    backgroundColor: '#e8f5e9',
+    borderRadius: 5,
+  },
+  noteText: {
+    color: '#2e7d32',
+    textAlign: 'center',
+    fontSize: 12,
   },
 });
 

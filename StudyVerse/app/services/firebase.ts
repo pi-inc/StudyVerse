@@ -7,6 +7,7 @@ import {
   sendPasswordResetEmail,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
   updateProfile,
   onAuthStateChanged,
   PhoneAuthProvider,
@@ -14,6 +15,7 @@ import {
   RecaptchaVerifier,
   User
 } from 'firebase/auth';
+import { Platform } from 'react-native';
 
 // Firebase configuration
 const firebaseConfig = {
@@ -74,9 +76,29 @@ export const resetPassword = async (email: string): Promise<void> => {
 
 export const signInWithGoogle = async (): Promise<User> => {
   try {
-    const result = await signInWithPopup(auth, googleProvider);
-    return result.user;
+    // Use appropriate sign-in method based on platform
+    if (Platform.OS === 'web') {
+      // For web, we can use popup or redirect
+      const result = await signInWithPopup(auth, googleProvider);
+      return result.user;
+    } else {
+      // For mobile (iOS/Android), we use a mock for testing
+      // In a real app, you would use Google Sign-In native SDKs:
+      // expo-auth-session/expo-google-sign-in or @react-native-google-signin/google-signin
+      console.log('Mobile Google Sign-In (Mock Implementation)');
+      
+      // Mock a successful sign-in for development
+      const mockUser = {
+        uid: 'google-mock-uid-' + Date.now(),
+        displayName: 'Google User',
+        email: 'google.user@example.com',
+        photoURL: 'https://example.com/profile.jpg',
+      };
+      
+      return mockUser as User;
+    }
   } catch (error) {
+    console.error('Google sign in error:', error);
     throw error;
   }
 };

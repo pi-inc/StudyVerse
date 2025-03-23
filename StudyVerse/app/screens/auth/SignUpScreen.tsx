@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -60,6 +60,23 @@ const SignUpScreen = () => {
       setErrorMessage(error instanceof Error ? error.message : 'An unknown error occurred');
       console.error('Error signing up with Google:', error);
     }
+  };
+
+  // Helper to determine if we're on mobile
+  const isMobile = Platform.OS !== 'web';
+
+  // Explanation text to show for Google login on mobile
+  const renderGoogleSignInInfo = () => {
+    if (isMobile) {
+      return (
+        <View style={styles.developmentNote}>
+          <Text style={styles.noteText}>
+            Development Mode: Mobile Google sign-in uses mock data.
+          </Text>
+        </View>
+      );
+    }
+    return null;
   };
 
   return (
@@ -152,6 +169,8 @@ const SignUpScreen = () => {
                 style={styles.googleButton}
               />
 
+              {renderGoogleSignInInfo()}
+
               <CustomButton
                 title="Sign up with Phone Number"
                 onPress={() => navigation.navigate('PhoneLogin')}
@@ -235,6 +254,17 @@ const styles = StyleSheet.create({
   },
   googleIcon: {
     marginRight: 8,
+  },
+  developmentNote: {
+    marginTop: 10,
+    padding: 10,
+    backgroundColor: '#e8f5e9',
+    borderRadius: 5,
+  },
+  noteText: {
+    color: '#2e7d32',
+    textAlign: 'center',
+    fontSize: 12,
   },
 });
 
