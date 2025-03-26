@@ -1,0 +1,243 @@
+"use client"
+
+import { useState } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Button } from "@/components/ui/button"
+import { Calendar } from "@/components/ui/calendar"
+import { Progress } from "@/components/ui/progress"
+import { Badge } from "@/components/ui/badge"
+import { CheckCircle2, Clock, CalendarIcon, Plus, MoreHorizontal } from "lucide-react"
+import { motion } from "framer-motion"
+
+export default function PlanPage() {
+  const [date, setDate] = useState<Date | undefined>(new Date())
+  const [activeTab, setActiveTab] = useState("today")
+
+  // Mock data
+  const todayTasks = [
+    { id: 1, title: "Complete Math Assignment", course: "Mathematics", time: "10:00 AM", completed: true },
+    { id: 2, title: "Read Chapter 5", course: "History", time: "1:00 PM", completed: false },
+    { id: 3, title: "Practice Programming", course: "Computer Science", time: "3:30 PM", completed: false },
+    { id: 4, title: "Review Notes", course: "Biology", time: "5:00 PM", completed: false },
+  ]
+
+  const upcomingTasks = [
+    { id: 5, title: "Physics Quiz", course: "Physics", date: "Tomorrow", priority: "high" },
+    { id: 6, title: "Essay Submission", course: "English", date: "In 2 days", priority: "medium" },
+    { id: 7, title: "Group Project Meeting", course: "Business", date: "In 3 days", priority: "medium" },
+  ]
+
+  const completedTasks = [
+    { id: 8, title: "Chemistry Lab Report", course: "Chemistry", date: "Yesterday", priority: "high" },
+    { id: 9, title: "Language Practice", course: "Spanish", date: "2 days ago", priority: "low" },
+  ]
+
+  const studyGoals = [
+    { id: 1, title: "Complete Mathematics Course", progress: 65 },
+    { id: 2, title: "Read 10 History Chapters", progress: 40 },
+    { id: 3, title: "Finish Programming Project", progress: 80 },
+  ]
+
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  }
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 },
+  }
+
+  return (
+    <div className="container mx-auto space-y-6">
+      <div className="flex flex-col space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight">Study Planner</h1>
+        <p className="text-muted-foreground">Organize your study schedule and track your progress</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-2 space-y-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <div className="flex justify-between items-center mb-4">
+              <TabsList>
+                <TabsTrigger value="today">Today</TabsTrigger>
+                <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+                <TabsTrigger value="completed">Completed</TabsTrigger>
+              </TabsList>
+              <Button size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Task
+              </Button>
+            </div>
+
+            <TabsContent value="today" className="space-y-4">
+              <motion.div variants={container} initial="hidden" animate="show" className="space-y-3">
+                {todayTasks.map((task) => (
+                  <motion.div key={task.id} variants={item}>
+                    <Card className="overflow-hidden">
+                      <CardContent className="p-0">
+                        <div className="flex items-center p-4">
+                          <div
+                            className={`h-10 w-10 rounded-full flex items-center justify-center ${task.completed ? "bg-green-100 text-green-600" : "bg-blue-100 text-blue-600"}`}
+                          >
+                            {task.completed ? <CheckCircle2 className="h-5 w-5" /> : <Clock className="h-5 w-5" />}
+                          </div>
+                          <div className="ml-4 flex-1">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p
+                                  className={`font-medium ${task.completed ? "line-through text-muted-foreground" : ""}`}
+                                >
+                                  {task.title}
+                                </p>
+                                <p className="text-sm text-muted-foreground">{task.course}</p>
+                              </div>
+                              <div className="flex items-center">
+                                <Badge variant="outline">{task.time}</Badge>
+                                <Button variant="ghost" size="icon" className="ml-2">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </motion.div>
+            </TabsContent>
+
+            <TabsContent value="upcoming" className="space-y-4">
+              <motion.div variants={container} initial="hidden" animate="show" className="space-y-3">
+                {upcomingTasks.map((task) => (
+                  <motion.div key={task.id} variants={item}>
+                    <Card className="overflow-hidden">
+                      <CardContent className="p-0">
+                        <div className="flex items-center p-4">
+                          <div
+                            className={`h-10 w-10 rounded-full flex items-center justify-center ${
+                              task.priority === "high"
+                                ? "bg-red-100 text-red-600"
+                                : task.priority === "medium"
+                                  ? "bg-yellow-100 text-yellow-600"
+                                  : "bg-green-100 text-green-600"
+                            }`}
+                          >
+                            <CalendarIcon className="h-5 w-5" />
+                          </div>
+                          <div className="ml-4 flex-1">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="font-medium">{task.title}</p>
+                                <p className="text-sm text-muted-foreground">{task.course}</p>
+                              </div>
+                              <div className="flex items-center">
+                                <Badge variant="outline">{task.date}</Badge>
+                                <Button variant="ghost" size="icon" className="ml-2">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </motion.div>
+            </TabsContent>
+
+            <TabsContent value="completed" className="space-y-4">
+              <motion.div variants={container} initial="hidden" animate="show" className="space-y-3">
+                {completedTasks.map((task) => (
+                  <motion.div key={task.id} variants={item}>
+                    <Card className="overflow-hidden">
+                      <CardContent className="p-0">
+                        <div className="flex items-center p-4">
+                          <div className="h-10 w-10 rounded-full flex items-center justify-center bg-green-100 text-green-600">
+                            <CheckCircle2 className="h-5 w-5" />
+                          </div>
+                          <div className="ml-4 flex-1">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="font-medium line-through text-muted-foreground">{task.title}</p>
+                                <p className="text-sm text-muted-foreground">{task.course}</p>
+                              </div>
+                              <div className="flex items-center">
+                                <Badge variant="outline">{task.date}</Badge>
+                                <Button variant="ghost" size="icon" className="ml-2">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </motion.div>
+            </TabsContent>
+          </Tabs>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Study Goals</CardTitle>
+              <CardDescription>Track your progress towards your study goals</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {studyGoals.map((goal) => (
+                  <div key={goal.id} className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm font-medium">{goal.title}</span>
+                      <span className="text-sm text-muted-foreground">{goal.progress}%</span>
+                    </div>
+                    <Progress value={goal.progress} className="h-2" />
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div>
+          <Card className="h-full">
+            <CardHeader>
+              <CardTitle>Calendar</CardTitle>
+              <CardDescription>View and manage your schedule</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Calendar mode="single" selected={date} onSelect={setDate} className="rounded-md border" />
+              <div className="mt-4 space-y-2">
+                <h3 className="font-medium text-sm">Upcoming Events</h3>
+                <div className="space-y-2">
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 rounded-full bg-red-500 mr-2"></div>
+                    <span className="text-sm">Physics Quiz (Tomorrow)</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 rounded-full bg-blue-500 mr-2"></div>
+                    <span className="text-sm">Essay Due (In 2 days)</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+                    <span className="text-sm">Group Meeting (In 3 days)</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  )
+}
+

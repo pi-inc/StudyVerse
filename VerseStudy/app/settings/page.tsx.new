@@ -1,0 +1,289 @@
+"use client"
+
+import { useState } from "react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
+import { useToast } from "@/components/ui/use-toast"
+import { Eye, EyeOff, Moon, Sun, Palette, Type, Zap } from "lucide-react"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Slider } from "@/components/ui/slider"
+import { useTheme } from "next-themes"
+
+export default function SettingsPage() {
+  const { toast } = useToast()
+  const [activeTab, setActiveTab] = useState("account")
+  const [showPassword, setShowPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [emailNotifications, setEmailNotifications] = useState(true)
+  const [pushNotifications, setPushNotifications] = useState(true)
+  const [soundEffects, setSoundEffects] = useState(true)
+  const [animations, setAnimations] = useState(true)
+  const [fontSize, setFontSize] = useState(16)
+  const { theme, setTheme } = useTheme()
+  const [colorTheme, setColorTheme] = useState("purple")
+
+  const handleSaveAppearance = () => {
+    // Apply font size to document root
+    document.documentElement.style.fontSize = `${fontSize}px`
+
+    // Save preferences to localStorage
+    localStorage.setItem("studyverse-font-size", fontSize.toString())
+    localStorage.setItem("studyverse-color-theme", colorTheme)
+    localStorage.setItem("studyverse-animations", animations.toString())
+
+    // Apply animations toggle
+    if (!animations) {
+      document.documentElement.classList.add("reduce-motion")
+    } else {
+      document.documentElement.classList.remove("reduce-motion")
+    }
+
+    toast({
+      title: "Appearance settings saved",
+      description: "Your appearance preferences have been updated.",
+    })
+  }
+
+  const handleSaveNotifications = () => {
+    toast({
+      title: "Notification settings saved",
+      description: "Your notification preferences have been updated.",
+    })
+  }
+
+  const handleSavePassword = () => {
+    toast({
+      title: "Password updated",
+      description: "Your password has been changed successfully.",
+    })
+  }
+
+  return (
+    <div className="container mx-auto py-6 space-y-6">
+      <div className="flex flex-col space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+        <p className="text-muted-foreground">Manage your account settings and preferences.</p>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="grid grid-cols-3 md:w-[400px]">
+          <TabsTrigger value="account">Account</TabsTrigger>
+          <TabsTrigger value="appearance">Appearance</TabsTrigger>
+          <TabsTrigger value="notifications">Notifications</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="account" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Account Information</CardTitle>
+              <CardDescription>Update your account details and manage your profile.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Name</Label>
+                <Input id="name" defaultValue="Alex Johnson" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" defaultValue="alex@example.com" />
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button
+                onClick={() =>
+                  toast({
+                    title: "Account updated",
+                    description: "Your account information has been saved.",
+                  })
+                }
+              >
+                Save changes
+              </Button>
+            </CardFooter>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Change Password</CardTitle>
+              <CardDescription>Update your password to keep your account secure.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="current-password">Current Password</Label>
+                <div className="relative">
+                  <Input id="current-password" type={showPassword ? "text" : "password"} placeholder="••••••••" />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    <span className="sr-only">{showPassword ? "Hide password" : "Show password"}</span>
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new-password">New Password</Label>
+                <div className="relative">
+                  <Input id="new-password" type={showNewPassword ? "text" : "password"} placeholder="••••••••" />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                  >
+                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    <span className="sr-only">{showNewPassword ? "Hide password" : "Show password"}</span>
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button onClick={handleSavePassword}>Update password</Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="appearance" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Theme</CardTitle>
+              <CardDescription>Customize the appearance of the application.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="theme-mode">Dark Mode</Label>
+                  <div className="flex items-center space-x-2">
+                    <Sun className="h-4 w-4" />
+                    <Switch
+                      id="theme-mode"
+                      checked={theme === "dark"}
+                      onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
+                    />
+                    <Moon className="h-4 w-4" />
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground">Switch between light and dark mode.</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Color Theme</Label>
+                <RadioGroup defaultValue={colorTheme} onValueChange={setColorTheme} className="grid grid-cols-3 gap-4">
+                  <div>
+                    <RadioGroupItem value="purple" id="purple" className="sr-only peer" />
+                    <Label
+                      htmlFor="purple"
+                      className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                    >
+                      <Palette className="mb-3 h-6 w-6 text-purple-500" />
+                      <span className="text-sm font-medium">Purple</span>
+                    </Label>
+                  </div>
+                  <div>
+                    <RadioGroupItem value="blue" id="blue" className="sr-only peer" />
+                    <Label
+                      htmlFor="blue"
+                      className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                    >
+                      <Palette className="mb-3 h-6 w-6 text-blue-500" />
+                      <span className="text-sm font-medium">Blue</span>
+                    </Label>
+                  </div>
+                  <div>
+                    <RadioGroupItem value="green" id="green" className="sr-only peer" />
+                    <Label
+                      htmlFor="green"
+                      className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                    >
+                      <Palette className="mb-3 h-6 w-6 text-green-500" />
+                      <span className="text-sm font-medium">Green</span>
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="font-size">Font Size: {fontSize}px</Label>
+                  <Type className="h-4 w-4" />
+                </div>
+                <Slider
+                  id="font-size"
+                  min={12}
+                  max={20}
+                  step={1}
+                  defaultValue={[fontSize]}
+                  onValueChange={(value) => setFontSize(value[0])}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Small</span>
+                  <span>Medium</span>
+                  <span>Large</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="animations">Animations</Label>
+                    <p className="text-sm text-muted-foreground">Enable or disable UI animations and transitions.</p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch id="animations" checked={animations} onCheckedChange={setAnimations} />
+                    <Zap className={`h-4 w-4 ${animations ? "text-yellow-500" : "text-muted-foreground"}`} />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button onClick={handleSaveAppearance}>Save preferences</Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="notifications" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Notification Preferences</CardTitle>
+              <CardDescription>Configure how you want to receive notifications.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between space-x-2">
+                <div className="space-y-0.5">
+                  <Label htmlFor="email-notifications">Email Notifications</Label>
+                  <p className="text-sm text-muted-foreground">Receive notifications via email.</p>
+                </div>
+                <Switch id="email-notifications" checked={emailNotifications} onCheckedChange={setEmailNotifications} />
+              </div>
+              <div className="flex items-center justify-between space-x-2">
+                <div className="space-y-0.5">
+                  <Label htmlFor="push-notifications">Push Notifications</Label>
+                  <p className="text-sm text-muted-foreground">Receive notifications on your device.</p>
+                </div>
+                <Switch id="push-notifications" checked={pushNotifications} onCheckedChange={setPushNotifications} />
+              </div>
+              <div className="flex items-center justify-between space-x-2">
+                <div className="space-y-0.5">
+                  <Label htmlFor="sound-effects">Sound Effects</Label>
+                  <p className="text-sm text-muted-foreground">Play sounds for notifications and actions.</p>
+                </div>
+                <Switch id="sound-effects" checked={soundEffects} onCheckedChange={setSoundEffects} />
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button onClick={handleSaveNotifications}>Save preferences</Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  )
+}
+

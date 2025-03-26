@@ -1,0 +1,351 @@
+"use client"
+
+import { useState } from "react"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import { MessageSquare, Users, UserPlus, Search, Heart, MessageCircle, Share2, BookmarkPlus } from "lucide-react"
+import { DirectMessageModal } from "@/components/direct-message-modal"
+import { StudySessionInviteModal } from "@/components/study-session-invite-modal"
+import { motion } from "framer-motion"
+
+export default function SocialPage() {
+  const [activeTab, setActiveTab] = useState("feed")
+  const [showDMModal, setShowDMModal] = useState(false)
+  const [showInviteModal, setShowInviteModal] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<string | null>(null)
+
+  // Mock data
+  const posts = [
+    {
+      id: 1,
+      user: {
+        name: "Emma Wilson",
+        username: "emmaw",
+        avatar: "/placeholder.svg?height=40&width=40",
+      },
+      content: "Just finished my calculus assignment! Anyone else struggling with differential equations?",
+      timestamp: "2 hours ago",
+      likes: 24,
+      comments: 8,
+      subject: "Mathematics",
+    },
+    {
+      id: 2,
+      user: {
+        name: "Marcus Chen",
+        username: "mchen",
+        avatar: "/placeholder.svg?height=40&width=40",
+      },
+      content: "Found this amazing resource for learning Python! Check it out: python.org/learning",
+      timestamp: "4 hours ago",
+      likes: 56,
+      comments: 12,
+      subject: "Computer Science",
+    },
+    {
+      id: 3,
+      user: {
+        name: "Sophia Rodriguez",
+        username: "sophiar",
+        avatar: "/placeholder.svg?height=40&width=40",
+      },
+      content:
+        "Anyone want to join our study group for the upcoming biology exam? We're meeting online tomorrow at 7 PM.",
+      timestamp: "Yesterday",
+      likes: 18,
+      comments: 15,
+      subject: "Biology",
+    },
+  ]
+
+  const studyGroups = [
+    {
+      id: 1,
+      name: "Calculus Study Group",
+      members: 28,
+      subject: "Mathematics",
+      activity: "Active",
+    },
+    {
+      id: 2,
+      name: "Programming Club",
+      members: 45,
+      subject: "Computer Science",
+      activity: "Very Active",
+    },
+    {
+      id: 3,
+      name: "Literature Discussion",
+      members: 19,
+      subject: "English",
+      activity: "Moderate",
+    },
+    {
+      id: 4,
+      name: "Physics Problem Solving",
+      members: 32,
+      subject: "Physics",
+      activity: "Active",
+    },
+  ]
+
+  const studyBuddies = [
+    {
+      id: 1,
+      name: "Alex Johnson",
+      username: "alexj",
+      avatar: "/placeholder.svg?height=40&width=40",
+      subjects: ["Mathematics", "Physics"],
+      status: "Online",
+    },
+    {
+      id: 2,
+      name: "Priya Patel",
+      username: "priyap",
+      avatar: "/placeholder.svg?height=40&width=40",
+      subjects: ["Biology", "Chemistry"],
+      status: "Online",
+    },
+    {
+      id: 3,
+      name: "David Kim",
+      username: "davidk",
+      avatar: "/placeholder.svg?height=40&width=40",
+      subjects: ["Computer Science", "Statistics"],
+      status: "Away",
+    },
+    {
+      id: 4,
+      name: "Maria Garcia",
+      username: "mariag",
+      avatar: "/placeholder.svg?height=40&width=40",
+      subjects: ["History", "English"],
+      status: "Offline",
+    },
+  ]
+
+  const handleOpenDM = (username: string) => {
+    setSelectedUser(username)
+    setShowDMModal(true)
+  }
+
+  const handleInviteToStudy = (username: string) => {
+    setSelectedUser(username)
+    setShowInviteModal(true)
+  }
+
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  }
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 },
+  }
+
+  return (
+    <div className="container mx-auto space-y-6">
+      <div className="flex flex-col space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight">Community</h1>
+        <p className="text-muted-foreground">Connect with other students, join study groups, and share resources</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-2 space-y-6">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex space-x-2">
+                <Avatar>
+                  <AvatarImage src="/placeholder.svg?height=40&width=40" alt="Your avatar" />
+                  <AvatarFallback>YA</AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <Input placeholder="Share something with the community..." className="h-full" />
+                </div>
+                <Button>Post</Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="mb-4">
+              <TabsTrigger value="feed">Feed</TabsTrigger>
+              <TabsTrigger value="groups">Study Groups</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="feed" className="space-y-4">
+              <motion.div variants={container} initial="hidden" animate="show" className="space-y-4">
+                {posts.map((post) => (
+                  <motion.div key={post.id} variants={item}>
+                    <Card>
+                      <CardContent className="p-0">
+                        <div className="p-4">
+                          <div className="flex items-center space-x-2 mb-3">
+                            <Avatar>
+                              <AvatarImage src={post.user.avatar} alt={post.user.name} />
+                              <AvatarFallback>{post.user.name.substring(0, 2)}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="font-medium">{post.user.name}</div>
+                              <div className="text-xs text-muted-foreground">
+                                @{post.user.username} · {post.timestamp}
+                              </div>
+                            </div>
+                            <Badge className="ml-auto" variant="outline">
+                              {post.subject}
+                            </Badge>
+                          </div>
+                          <p className="mb-3">{post.content}</p>
+                          <div className="flex justify-between text-muted-foreground">
+                            <Button variant="ghost" size="sm" className="flex items-center space-x-1">
+                              <Heart className="h-4 w-4" />
+                              <span>{post.likes}</span>
+                            </Button>
+                            <Button variant="ghost" size="sm" className="flex items-center space-x-1">
+                              <MessageCircle className="h-4 w-4" />
+                              <span>{post.comments}</span>
+                            </Button>
+                            <Button variant="ghost" size="sm">
+                              <Share2 className="h-4 w-4 mr-1" />
+                              <span>Share</span>
+                            </Button>
+                            <Button variant="ghost" size="sm">
+                              <BookmarkPlus className="h-4 w-4 mr-1" />
+                              <span>Save</span>
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </motion.div>
+            </TabsContent>
+
+            <TabsContent value="groups" className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {studyGroups.map((group) => (
+                  <Card key={group.id}>
+                    <CardHeader className="pb-2">
+                      <div className="flex justify-between items-start">
+                        <CardTitle className="text-lg">{group.name}</CardTitle>
+                        <Badge variant="outline">{group.subject}</Badge>
+                      </div>
+                      <CardDescription>
+                        {group.members} members · {group.activity}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardFooter>
+                      <Button className="w-full">
+                        <Users className="h-4 w-4 mr-2" />
+                        Join Group
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle>Study Buddies</CardTitle>
+                <Button variant="ghost" size="sm">
+                  <Search className="h-4 w-4" />
+                </Button>
+              </div>
+              <CardDescription>Find students with similar interests</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {studyBuddies.map((buddy) => (
+                <div key={buddy.id} className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <div className="relative">
+                      <Avatar>
+                        <AvatarImage src={buddy.avatar} alt={buddy.name} />
+                        <AvatarFallback>{buddy.name.substring(0, 2)}</AvatarFallback>
+                      </Avatar>
+                      <div
+                        className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-background ${
+                          buddy.status === "Online"
+                            ? "bg-green-500"
+                            : buddy.status === "Away"
+                              ? "bg-yellow-500"
+                              : "bg-gray-500"
+                        }`}
+                      ></div>
+                    </div>
+                    <div>
+                      <div className="font-medium text-sm">{buddy.name}</div>
+                      <div className="text-xs text-muted-foreground">{buddy.subjects.join(", ")}</div>
+                    </div>
+                  </div>
+                  <div className="flex space-x-1">
+                    <Button variant="ghost" size="icon" onClick={() => handleOpenDM(buddy.username)}>
+                      <MessageSquare className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleInviteToStudy(buddy.username)}>
+                      <UserPlus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+            <CardFooter>
+              <Button variant="outline" className="w-full">
+                Find More Buddies
+              </Button>
+            </CardFooter>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Trending Topics</CardTitle>
+              <CardDescription>Popular subjects being discussed</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="flex justify-between items-center">
+                <div className="font-medium">#DataStructures</div>
+                <Badge variant="secondary">128 posts</Badge>
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="font-medium">#OrganicChemistry</div>
+                <Badge variant="secondary">96 posts</Badge>
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="font-medium">#MacroEconomics</div>
+                <Badge variant="secondary">84 posts</Badge>
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="font-medium">#LinearAlgebra</div>
+                <Badge variant="secondary">72 posts</Badge>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Modals */}
+      <DirectMessageModal isOpen={showDMModal} onClose={() => setShowDMModal(false)} username={selectedUser || ""} />
+      <StudySessionInviteModal
+        isOpen={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
+        username={selectedUser || ""}
+      />
+    </div>
+  )
+}
+
