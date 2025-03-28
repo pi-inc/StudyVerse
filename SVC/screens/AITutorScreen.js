@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect } from "react"
 import {
   View,
   Text,
@@ -10,11 +10,13 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView
+  SafeAreaView,
+  ActivityIndicator,
 } from "react-native"
 import { Ionicons, Feather } from "@expo/vector-icons"
 import { useNavigation } from "@react-navigation/native"
 import Header from "../components/shared/Header"
+import { geminiAI } from "../services/ai"
 
 const AITutorScreen = ({ route }) => {
   const [message, setMessage] = useState("")
@@ -23,9 +25,12 @@ const AITutorScreen = ({ route }) => {
       id: 1,
       sender: "ai",
       text: "Hello! I'm your AI Tutor. How can I help you with your learning today?",
-      timestamp: "1:45 PM"
-    }
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    },
   ])
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState(null)
+
   const scrollViewRef = useRef(null)
   const navigation = useNavigation()
   const [topic, setTopic] = useState(route?.params?.topic || "Data Structures")
@@ -40,38 +45,79 @@ const AITutorScreen = ({ route }) => {
   const suggestedQuestions = [
     {
       id: 1,
-      text: "Explain arrays vs linked lists"
+      text: "Explain arrays vs linked lists",
     },
     {
       id: 2,
-      text: "How do binary trees work?"
-    }
+      text: "How do binary trees work?",
+    },
   ]
 
-  const handleSend = () => {
-    if (message.trim() === "") return
+  const handleSend = async () => {
+    if (message.trim() === "" || isLoading) return
 
     // Add user message
     const newUserMessage = {
       id: messages.length + 1,
       sender: "user",
       text: message,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     }
 
-    setMessages([...messages, newUserMessage])
+    setMessages((prev) => [...prev, newUserMessage])
+    const userQuestion = message
     setMessage("")
+    setIsLoading(true)
+    setError(null)
 
-    // Simulate AI response after a short delay
-    setTimeout(() => {
+    try {
+      // Format previous messages for context (limit to last 5 for simplicity)
+      const recentMessages = messages.slice(-5).map((msg) => ({
+        role: msg.sender === "user" ? "user" : "model",
+        content: msg.text,
+      }))
+
+      // Add the new user message
+      recentMessages.push({
+        role: "user",
+        content: userQuestion,
+      })
+
+      // Call Gemini API with updated model name
+      const response = await geminiAI.chat(recentMessages, {
+        model: "gemini-1.5-pro", // Updated model name
+        temperature: 0.7,
+      })
+
+      // Extract the response text
+      const aiResponseText =
+        response.candidates?.[0]?.content?.parts?.[0]?.text || "I'm sorry, I couldn't generate a response at this time."
+
+      // Add AI response
       const aiResponse = {
         id: messages.length + 2,
         sender: "ai",
-        text: `I'll help you understand ${message}. This is a simulated response that would be replaced with actual AI-generated content in a production app.`,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        text: aiResponseText,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       }
-      setMessages(prev => [...prev, aiResponse])
-    }, 1000)
+
+      setMessages((prev) => [...prev, aiResponse])
+    } catch (err) {
+      console.error("Error calling Gemini API:", err)
+      setError(err.message)
+
+      // Add error message as AI response
+      const errorResponse = {
+        id: messages.length + 2,
+        sender: "ai",
+        text: `I'm sorry, I encountered an error: ${err.message}. Please try again later.`,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      }
+
+      setMessages((prev) => [...prev, errorResponse])
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleSuggestedQuestion = (question) => {
@@ -90,7 +136,7 @@ const AITutorScreen = ({ route }) => {
   return (
     <SafeAreaView style={styles.container}>
       <Header title="AI Tutor" showBack={true} />
-      
+
       <View style={styles.topicBar}>
         <View style={styles.topicContainer}>
           <Text style={styles.topicText}>{topic}</Text>
@@ -101,9 +147,9 @@ const AITutorScreen = ({ route }) => {
       </View>
 
       <View style={styles.suggestedQuestionsContainer}>
-        {suggestedQuestions.map(question => (
-          <TouchableOpacity 
-            key={question.id} 
+        {suggestedQuestions.map((question) => (
+          <TouchableOpacity
+            key={question.id}
             style={styles.suggestedQuestion}
             onPress={() => handleSuggestedQuestion(question.text)}
           >
@@ -115,32 +161,39 @@ const AITutorScreen = ({ route }) => {
         ))}
       </View>
 
-      <ScrollView 
-        ref={scrollViewRef}
-        style={styles.messagesContainer}
-        contentContainerStyle={styles.messagesContent}
-      >
-        {messages.map(msg => (
-          <View 
-            key={msg.id} 
-            style={[
-              styles.messageWrapper,
-              msg.sender === "user" ? styles.userMessageWrapper : styles.aiMessageWrapper
-            ]}
+      <ScrollView ref={scrollViewRef} style={styles.messagesContainer} contentContainerStyle={styles.messagesContent}>
+        {messages.map((msg) => (
+          <View
+            key={msg.id}
+            style={[styles.messageWrapper, msg.sender === "user" ? styles.userMessageWrapper : styles.aiMessageWrapper]}
           >
             {msg.sender === "ai" && (
               <View style={styles.avatarContainer}>
                 <Text style={styles.avatarText}>AI</Text>
               </View>
             )}
-            <View style={[
-              styles.messageBubble,
-              msg.sender === "user" ? styles.userMessageBubble : styles.aiMessageBubble
-            ]}>
+            <View
+              style={[styles.messageBubble, msg.sender === "user" ? styles.userMessageBubble : styles.aiMessageBubble]}
+            >
               <Text style={styles.messageText}>{msg.text}</Text>
             </View>
           </View>
         ))}
+
+        {isLoading && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator color="#a78bfa" size="small" />
+            <Text style={styles.loadingText}>AI is thinking...</Text>
+          </View>
+        )}
+
+        {error && (
+          <View style={styles.errorContainer}>
+            <Ionicons name="alert-circle" size={20} color="#ef4444" />
+            <Text style={styles.errorText}>Error: {error}</Text>
+          </View>
+        )}
+
         <View style={styles.timestampContainer}>
           <Text style={styles.timestampText}>{messages[messages.length - 1].timestamp}</Text>
         </View>
@@ -163,13 +216,14 @@ const AITutorScreen = ({ route }) => {
           multiline
           returnKeyType="send"
           onSubmitEditing={handleSend}
+          editable={!isLoading}
         />
-        <TouchableOpacity 
-          style={[styles.sendButton, message.trim() === "" && styles.sendButtonDisabled]} 
+        <TouchableOpacity
+          style={[styles.sendButton, (message.trim() === "" || isLoading) && styles.sendButtonDisabled]}
           onPress={handleSend}
-          disabled={message.trim() === ""}
+          disabled={message.trim() === "" || isLoading}
         >
-          <Feather name="send" size={22} color={message.trim() === "" ? "#6b7280" : "#a78bfa"} />
+          <Feather name="send" size={22} color={message.trim() === "" || isLoading ? "#6b7280" : "#a78bfa"} />
         </TouchableOpacity>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -275,6 +329,37 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 22,
   },
+  loadingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    backgroundColor: "#1a1a2e",
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 16,
+  },
+  loadingText: {
+    color: "#a78bfa",
+    marginLeft: 8,
+    fontSize: 14,
+  },
+  errorContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "center",
+    backgroundColor: "rgba(239, 68, 68, 0.1)",
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 16,
+    maxWidth: "90%",
+  },
+  errorText: {
+    color: "#ef4444",
+    marginLeft: 8,
+    fontSize: 14,
+  },
   timestampContainer: {
     alignItems: "center",
     marginBottom: 16,
@@ -315,3 +400,4 @@ const styles = StyleSheet.create({
 })
 
 export default AITutorScreen
+

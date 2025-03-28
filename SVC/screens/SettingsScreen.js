@@ -5,6 +5,7 @@ import { View, Text, StyleSheet, ScrollView, SafeAreaView, Animated } from "reac
 import Header from "../components/shared/Header"
 import SettingsSection from "../components/settings/SettingsSection"
 import AnimatedListItem from "../components/shared/AnimatedListItem"
+import { signOut } from "../services/auth"
 
 const SettingsScreen = () => {
   const fadeAnim = useRef(new Animated.Value(0)).current
@@ -24,6 +25,15 @@ const SettingsScreen = () => {
       }),
     ]).start()
   }, [])
+
+  const handleSignOut = async () => {
+    try {
+      await signOut()
+      // Navigation will be handled by the auth state listener in App.js
+    } catch (error) {
+      console.error("Sign out error:", error)
+    }
+  }
 
   const settingsSections = [
     {
@@ -75,6 +85,17 @@ const SettingsScreen = () => {
           icon: "color-palette-outline",
           options: ["Default", "Blue", "Green", "Purple"],
         },
+      ],
+    },
+    {
+      id: "account",
+      title: "Account",
+      icon: "person",
+      description: "Manage your account settings",
+      items: [
+        { id: "profile", title: "Edit Profile", icon: "person-outline" },
+        { id: "password", title: "Change Password", icon: "key-outline" },
+        { id: "signout", title: "Sign Out", icon: "log-out-outline", danger: true, onPress: handleSignOut },
       ],
     },
   ]

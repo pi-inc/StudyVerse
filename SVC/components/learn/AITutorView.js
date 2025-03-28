@@ -1,13 +1,15 @@
 "use client"
-
-import React from "react"
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native"
+import { useState } from "react"
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import AnimatedListItem from "../shared/AnimatedListItem"
 import { useNavigation } from "@react-navigation/native"
+import { geminiAI } from "../../services/ai"
 
 const AITutorView = () => {
   const navigation = useNavigation()
+  const [isLoading, setIsLoading] = useState(false)
+  const [aiError, setAiError] = useState(null)
 
   // Sample recent questions
   const recentQuestions = [
@@ -49,8 +51,23 @@ const AITutorView = () => {
     navigation.navigate("AITutor")
   }
 
-  const handleQuestionPress = (question) => {
-    navigation.navigate("AITutor", { initialQuestion: question })
+  const handleQuestionPress = async (question) => {
+    try {
+      // Test the Gemini API with a simple request before navigating
+      setIsLoading(true)
+      setAiError(null)
+
+      // Simple test to check if the API is working
+      await geminiAI.generateContent("Hello, can you respond with 'API is working'?")
+
+      // If successful, navigate to the AI Tutor screen with the question
+      navigation.navigate("AITutor", { initialQuestion: question })
+    } catch (error) {
+      console.error("Error testing Gemini API:", error)
+      setAiError(error.message)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -61,10 +78,21 @@ const AITutorView = () => {
           <Text style={styles.description}>
             Get personalized help with any topic or question. Your AI tutor is available 24/7.
           </Text>
-          
-          <TouchableOpacity style={styles.askButton} onPress={handleAskTutor}>
-            <Ionicons name="bulb-outline" size={20} color="#fff" />
-            <Text style={styles.askButtonText}>Ask AI Tutor</Text>
+
+          {aiError && (
+            <View style={styles.errorContainer}>
+              <Ionicons name="alert-circle" size={20} color="#ef4444" />
+              <Text style={styles.errorText}>AI Service Error: {aiError}</Text>
+            </View>
+          )}
+
+          <TouchableOpacity style={styles.askButton} onPress={handleAskTutor} disabled={isLoading}>
+            {isLoading ? (
+              <ActivityIndicator color="#fff" size="small" style={{ marginRight: 8 }} />
+            ) : (
+              <Ionicons name="bulb-outline" size={20} color="#fff" />
+            )}
+            <Text style={styles.askButtonText}>{isLoading ? "Connecting to AI..." : "Ask AI Tutor"}</Text>
           </TouchableOpacity>
         </View>
       </AnimatedListItem>
@@ -72,12 +100,13 @@ const AITutorView = () => {
       <AnimatedListItem index={1}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Recent Questions</Text>
-          
+
           {recentQuestions.map((item) => (
-            <TouchableOpacity 
-              key={item.id} 
+            <TouchableOpacity
+              key={item.id}
               style={styles.questionItem}
               onPress={() => handleQuestionPress(item.question)}
+              disabled={isLoading}
             >
               <Ionicons name="bulb-outline" size={20} color="#8a70ff" style={styles.questionIcon} />
               <Text style={styles.questionText}>{item.question}</Text>
@@ -93,7 +122,7 @@ const AITutorView = () => {
       <AnimatedListItem index={3}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Learning Resources</Text>
-          
+
           {learningResources.map((resource) => (
             <TouchableOpacity key={resource.id} style={styles.resourceItem}>
               <View style={styles.resourceIconContainer}>
@@ -130,6 +159,19 @@ const styles = StyleSheet.create({
     color: "#9ca3af",
     marginBottom: 16,
     lineHeight: 22,
+  },
+  errorContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(239, 68, 68, 0.1)",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  errorText: {
+    color: "#ef4444",
+    marginLeft: 8,
+    fontSize: 14,
   },
   askButton: {
     flexDirection: "row",
@@ -201,4 +243,4 @@ const styles = StyleSheet.create({
 })
 
 export default AITutorView
-    
+
