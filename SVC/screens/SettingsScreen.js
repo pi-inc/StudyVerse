@@ -1,15 +1,18 @@
 "use client"
 
 import { useRef, useEffect } from "react"
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, Animated } from "react-native"
+import { View, Text, ScrollView, SafeAreaView, Animated, Switch } from "react-native"
 import Header from "../components/shared/Header"
 import SettingsSection from "../components/settings/SettingsSection"
 import AnimatedListItem from "../components/shared/AnimatedListItem"
 import { signOut } from "../services/auth"
+import { useTheme } from "../context/ThemeContext"
+import { useThemedStyles } from "../hooks/useThemedStyles"
 
 const SettingsScreen = () => {
   const fadeAnim = useRef(new Animated.Value(0)).current
   const translateYAnim = useRef(new Animated.Value(30)).current
+  const { theme, isDark, toggleTheme } = useTheme()
 
   useEffect(() => {
     Animated.parallel([
@@ -35,7 +38,92 @@ const SettingsScreen = () => {
     }
   }
 
+  // Use themed styles
+  const styles = useThemedStyles((theme) => ({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background.primary,
+    },
+    scrollView: {
+      flex: 1,
+      paddingHorizontal: 16,
+    },
+    pageTitle: {
+      fontSize: 24,
+      fontWeight: "bold",
+      color: theme.colors.primary,
+      marginTop: 16,
+      marginBottom: 8,
+    },
+    gradientDivider: {
+      height: 4,
+      backgroundColor: theme.colors.primary,
+      borderRadius: 2,
+      marginBottom: 24,
+    },
+    versionContainer: {
+      alignItems: "center",
+      marginVertical: 40,
+    },
+    versionText: {
+      fontSize: 14,
+      color: theme.colors.text.tertiary,
+      marginBottom: 4,
+    },
+    copyrightText: {
+      fontSize: 12,
+      color: theme.colors.text.tertiary,
+    },
+    themeContainer: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      backgroundColor: theme.colors.background.card,
+      padding: 16,
+      borderRadius: 8,
+      marginBottom: 16,
+    },
+    themeText: {
+      fontSize: 16,
+      color: theme.colors.text.primary,
+      fontWeight: "500",
+    },
+    themeDescription: {
+      fontSize: 14,
+      color: theme.colors.text.tertiary,
+      marginTop: 4,
+    },
+  }))
+
   const settingsSections = [
+    {
+      id: "appearance",
+      title: "Appearance Settings",
+      icon: "color-palette",
+      description: "Customize how StudyVerse looks",
+      items: [
+        {
+          id: "theme",
+          title: "Dark Mode",
+          icon: isDark ? "moon" : "sunny",
+          customComponent: (
+            <Switch
+              value={isDark}
+              onValueChange={toggleTheme}
+              trackColor={{ false: "#e5e7eb", true: theme.colors.primary }}
+              thumbColor="#fff"
+            />
+          ),
+        },
+        { id: "fontSize", title: "Font Size", icon: "text-outline", options: ["Small", "Medium", "Large"] },
+        {
+          id: "colorScheme",
+          title: "Color Scheme",
+          icon: "color-palette-outline",
+          options: ["Default", "Blue", "Green", "Purple"],
+        },
+      ],
+    },
     {
       id: "account",
       title: "Account Settings",
@@ -69,22 +157,6 @@ const SettingsScreen = () => {
         { id: "email", title: "Email Notifications", icon: "mail-outline", toggle: true },
         { id: "reminders", title: "Study Reminders", icon: "alarm-outline", toggle: true },
         { id: "marketing", title: "Marketing Communications", icon: "megaphone-outline", toggle: true },
-      ],
-    },
-    {
-      id: "appearance",
-      title: "Appearance Settings",
-      icon: "color-palette",
-      description: "Customize how StudyVerse looks",
-      items: [
-        { id: "theme", title: "Theme", icon: "contrast-outline", options: ["Dark", "Light", "System"] },
-        { id: "fontSize", title: "Font Size", icon: "text-outline", options: ["Small", "Medium", "Large"] },
-        {
-          id: "colorScheme",
-          title: "Color Scheme",
-          icon: "color-palette-outline",
-          options: ["Default", "Blue", "Green", "Purple"],
-        },
       ],
     },
     {
@@ -135,43 +207,6 @@ const SettingsScreen = () => {
     </SafeAreaView>
   )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#0a0a1a",
-  },
-  scrollView: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  pageTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#a78bfa",
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  gradientDivider: {
-    height: 4,
-    backgroundColor: "#7c3aed",
-    borderRadius: 2,
-    marginBottom: 24,
-  },
-  versionContainer: {
-    alignItems: "center",
-    marginVertical: 40,
-  },
-  versionText: {
-    fontSize: 14,
-    color: "#6b7280",
-    marginBottom: 4,
-  },
-  copyrightText: {
-    fontSize: 12,
-    color: "#6b7280",
-  },
-})
 
 export default SettingsScreen
 

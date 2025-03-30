@@ -8,7 +8,9 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack"
 import { Ionicons } from "@expo/vector-icons"
 import { initializeApp } from "firebase/app"
 import { getAuth, onAuthStateChanged } from "firebase/auth"
-import { colors } from "./styles/theme"
+
+// Import ThemeProvider
+import { ThemeProvider, useTheme } from "./context/ThemeContext"
 
 // Screens
 import HomeScreen from "./screens/HomeScreen"
@@ -55,7 +57,10 @@ try {
 const Tab = createBottomTabNavigator()
 const Stack = createNativeStackNavigator()
 
+// Main tab navigator with theme support
 function MainTabs() {
+  const { theme } = useTheme()
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -76,11 +81,11 @@ function MainTabs() {
 
           return <Ionicons name={iconName} size={size} color={color} />
         },
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.text.tertiary,
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: theme.colors.text.tertiary,
         tabBarStyle: {
-          backgroundColor: colors.background.card,
-          borderTopColor: colors.border.dark,
+          backgroundColor: theme.colors.background.card,
+          borderTopColor: theme.colors.border.dark,
           paddingTop: 5,
           paddingBottom: 5,
           height: 60,
@@ -127,10 +132,12 @@ const SignInScreen = (props) => {
 const SignUpScreen = (props) => <SignUpStep {...props} />
 const ForgotPasswordScreen = (props) => <ForgotPasswordStep {...props} />
 
-export default function App() {
+// Main app component with theme-aware status bar
+function AppContent() {
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [skipAuth, setSkipAuth] = useState(false)
+  const { theme, isDark } = useTheme()
 
   useEffect(() => {
     const auth = getAuth()
@@ -148,13 +155,16 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="light-content" backgroundColor={colors.background.dark} />
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background.primary }]}>
+        <StatusBar
+          barStyle={isDark ? "light-content" : "dark-content"}
+          backgroundColor={theme.colors.background.primary}
+        />
         <NavigationContainer>
           <Stack.Navigator
             screenOptions={{
               headerShown: false,
-              contentStyle: { backgroundColor: colors.background.dark },
+              contentStyle: { backgroundColor: theme.colors.background.primary },
             }}
           >
             {!isAuthenticated && !skipAuth ? (
@@ -187,10 +197,18 @@ export default function App() {
   )
 }
 
+// Wrap the app with ThemeProvider
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
+  )
+}
+
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background.dark,
     paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
   },
 })

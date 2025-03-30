@@ -1,5 +1,7 @@
-// This is a partial update to ensure text colors have proper contrast
-export const colors = {
+// Theme configuration with support for dark and light modes
+
+// Light theme colors
+const lightColors = {
   primary: "#7c3aed", // Purple
   primaryLight: "#a78bfa",
   secondary: "#3b82f6", // Blue
@@ -10,8 +12,40 @@ export const colors = {
   success: "#10b981", // Green
 
   background: {
-    dark: "#0f172a", // Dark blue
-    light: "#1e293b",
+    primary: "#ffffff",
+    secondary: "#f3f4f6",
+    card: "#ffffff",
+    elevated: "#f9fafb",
+  },
+
+  text: {
+    primary: "#111827", // Very dark gray
+    secondary: "#374151", // Dark gray
+    tertiary: "#6b7280", // Medium gray
+    muted: "#9ca3af", // Light gray
+    inverse: "#f8fafc", // White text for dark backgrounds
+  },
+
+  border: {
+    light: "#e5e7eb",
+    dark: "#d1d5db",
+  },
+}
+
+// Dark theme colors
+const darkColors = {
+  primary: "#7c3aed", // Purple
+  primaryLight: "#a78bfa",
+  secondary: "#3b82f6", // Blue
+  accent: "#10b981", // Green
+  info: "#0ea5e9", // Light blue
+  warning: "#f59e0b", // Orange
+  error: "#ef4444", // Red
+  success: "#10b981", // Green
+
+  background: {
+    primary: "#0f172a", // Dark blue
+    secondary: "#1e293b",
     card: "#1e293b",
     elevated: "#334155",
   },
@@ -21,6 +55,7 @@ export const colors = {
     secondary: "#cbd5e1", // Light gray
     tertiary: "#94a3b8", // Medium gray
     muted: "#64748b", // Dark gray
+    inverse: "#111827", // Dark text for light backgrounds
   },
 
   border: {
@@ -38,7 +73,6 @@ export const spacing = {
   xxl: 48,
 }
 
-// Add the missing typography export
 export const typography = {
   fontSizes: {
     xs: 12,
@@ -71,4 +105,25 @@ export const borderRadius = {
   xxl: 24,
   round: 9999,
 }
+
+// Export theme configurations
+export const themes = {
+  light: {
+    colors: lightColors,
+    spacing,
+    typography,
+    borderRadius,
+    isDark: false,
+  },
+  dark: {
+    colors: darkColors,
+    spacing,
+    typography,
+    borderRadius,
+    isDark: true,
+  },
+}
+
+// For backward compatibility, export the dark theme colors as the default
+export const colors = darkColors
 

@@ -1,18 +1,10 @@
 "use client"
 
 import { useState, useRef } from "react"
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Switch,
-  Animated,
-  LayoutAnimation,
-  Platform,
-  UIManager,
-} from "react-native"
+import { View, Text, TouchableOpacity, Switch, Animated, LayoutAnimation, Platform, UIManager } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
+import { useTheme } from "../../context/ThemeContext"
+import { useThemedStyles } from "../../hooks/useThemedStyles"
 
 // Enable LayoutAnimation for Android
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -39,6 +31,7 @@ const SettingsSection = ({ title, icon, description, items }) => {
     }, {}),
   )
 
+  const { theme } = useTheme()
   const rotateAnim = useRef(new Animated.Value(0)).current
   const scaleAnim = useRef(new Animated.Value(1)).current
 
@@ -93,6 +86,93 @@ const SettingsSection = ({ title, icon, description, items }) => {
     transform: [{ rotate: rotateInterpolate }],
   }
 
+  // Use themed styles
+  const styles = useThemedStyles((theme) => ({
+    container: {
+      marginBottom: 16,
+    },
+    headerContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: 16,
+    },
+    iconContainer: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: `${theme.colors.primary}20`, // 20% opacity
+      justifyContent: "center",
+      alignItems: "center",
+      marginRight: 16,
+    },
+    titleContainer: {
+      flex: 1,
+    },
+    title: {
+      fontSize: 18,
+      fontWeight: "bold",
+      color: theme.colors.text.primary,
+      marginBottom: 4,
+    },
+    description: {
+      fontSize: 14,
+      color: theme.colors.text.tertiary,
+    },
+    itemsContainer: {
+      backgroundColor: theme.colors.background.card,
+      borderRadius: 12,
+      marginVertical: 8,
+      overflow: "hidden",
+    },
+    itemRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingVertical: 14,
+      paddingHorizontal: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border.light,
+    },
+    dangerItem: {
+      borderLeftWidth: 3,
+      borderLeftColor: theme.colors.error,
+    },
+    itemLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      flex: 1,
+    },
+    itemIcon: {
+      marginRight: 12,
+    },
+    itemText: {
+      fontSize: 16,
+      color: theme.colors.text.primary,
+    },
+    dangerText: {
+      color: theme.colors.error,
+    },
+    itemRight: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    optionSelector: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    optionText: {
+      fontSize: 14,
+      color: theme.colors.text.tertiary,
+      marginRight: 8,
+    },
+    divider: {
+      height: 4,
+      backgroundColor: `${theme.colors.primary}20`, // 20% opacity
+      borderRadius: 2,
+      marginTop: 8,
+    },
+  }))
+
   return (
     <View style={styles.container}>
       <Animated.View
@@ -108,14 +188,14 @@ const SettingsSection = ({ title, icon, description, items }) => {
           onPressOut={handlePressOut}
         >
           <View style={styles.iconContainer}>
-            <Ionicons name={icon} size={24} color="#a78bfa" />
+            <Ionicons name={icon} size={24} color={theme.colors.primary} />
           </View>
           <View style={styles.titleContainer}>
             <Text style={styles.title}>{title}</Text>
             <Text style={styles.description}>{description}</Text>
           </View>
           <Animated.View style={arrowStyles}>
-            <Ionicons name="chevron-down" size={24} color="#a78bfa" />
+            <Ionicons name="chevron-down" size={24} color={theme.colors.primary} />
           </Animated.View>
         </TouchableOpacity>
       </Animated.View>
@@ -142,31 +222,35 @@ const SettingsSection = ({ title, icon, description, items }) => {
                   <Ionicons
                     name={item.icon}
                     size={20}
-                    color={item.danger ? "#ef4444" : "#a78bfa"}
+                    color={item.danger ? theme.colors.error : theme.colors.primary}
                     style={styles.itemIcon}
                   />
                   <Text style={[styles.itemText, item.danger && styles.dangerText]}>{item.title}</Text>
                 </View>
 
                 <View style={styles.itemRight}>
-                  {item.toggle && (
+                  {item.customComponent ? (
+                    item.customComponent
+                  ) : item.toggle ? (
                     <Switch
-                      trackColor={{ false: "#374151", true: "#7c3aed" }}
-                      thumbColor={toggleStates[item.id] ? "#a78bfa" : "#f4f3f4"}
-                      ios_backgroundColor="#374151"
+                      trackColor={{ false: theme.colors.border.light, true: theme.colors.primary }}
+                      thumbColor={toggleStates[item.id] ? theme.colors.primaryLight : "#f4f3f4"}
+                      ios_backgroundColor={theme.colors.border.light}
                       onValueChange={() => toggleSwitch(item.id)}
                       value={toggleStates[item.id]}
                     />
-                  )}
-
-                  {item.options && (
+                  ) : item.options ? (
                     <TouchableOpacity style={styles.optionSelector}>
                       <Text style={styles.optionText}>{selectedOptions[item.id]}</Text>
-                      <Ionicons name="chevron-forward" size={16} color="#9ca3af" />
+                      <Ionicons name="chevron-forward" size={16} color={theme.colors.text.tertiary} />
                     </TouchableOpacity>
+                  ) : item.onPress ? (
+                    <TouchableOpacity onPress={item.onPress}>
+                      <Ionicons name="chevron-forward" size={20} color={theme.colors.text.tertiary} />
+                    </TouchableOpacity>
+                  ) : (
+                    <Ionicons name="chevron-forward" size={20} color={theme.colors.text.tertiary} />
                   )}
-
-                  {!item.toggle && !item.options && <Ionicons name="chevron-forward" size={20} color="#9ca3af" />}
                 </View>
               </View>
             </Animated.View>
@@ -178,92 +262,6 @@ const SettingsSection = ({ title, icon, description, items }) => {
     </View>
   )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    marginBottom: 16,
-  },
-  headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 16,
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(124, 58, 237, 0.1)",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 16,
-  },
-  titleContainer: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#fff",
-    marginBottom: 4,
-  },
-  description: {
-    fontSize: 14,
-    color: "#9ca3af",
-  },
-  itemsContainer: {
-    backgroundColor: "#1a1a2e",
-    borderRadius: 12,
-    marginVertical: 8,
-    overflow: "hidden",
-  },
-  itemRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#2d2d44",
-  },
-  dangerItem: {
-    borderLeftWidth: 3,
-    borderLeftColor: "#ef4444",
-  },
-  itemLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-  },
-  itemIcon: {
-    marginRight: 12,
-  },
-  itemText: {
-    fontSize: 16,
-    color: "#fff",
-  },
-  dangerText: {
-    color: "#ef4444",
-  },
-  itemRight: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  optionSelector: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  optionText: {
-    fontSize: 14,
-    color: "#9ca3af",
-    marginRight: 8,
-  },
-  divider: {
-    height: 4,
-    backgroundColor: "rgba(124, 58, 237, 0.2)",
-    borderRadius: 2,
-    marginTop: 8,
-  },
-})
 
 export default SettingsSection
 
