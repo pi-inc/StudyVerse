@@ -1,9 +1,13 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
+import { useNavigation } from "@react-navigation/native"
 
 const { height } = Dimensions.get("window")
 
-const KeyFeaturesStep = ({ width, onNext, onBack }) => {
+// Update the component signature to accept setSkipAuth
+const KeyFeaturesStep = ({ width, onNext, onBack, setSkipAuth }) => {
+  const navigation = useNavigation()
+
   return (
     <View style={[styles.container, { width }]}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -60,15 +64,27 @@ const KeyFeaturesStep = ({ width, onNext, onBack }) => {
       </ScrollView>
 
       <View style={styles.footer}>
-        <Text style={styles.stepIndicator}>2 of 8</Text>
+        <Text style={styles.stepIndicator}>2 of 2</Text>
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.backButton} onPress={onBack}>
             <Ionicons name="arrow-back" size={16} color="#6b7280" />
             <Text style={styles.backButtonText}>Back</Text>
           </TouchableOpacity>
 
+          {/* Update the skip button to use setSkipAuth */}
+          {/* Replace the skip button with this: */}
+          <TouchableOpacity
+            style={styles.skipButton}
+            onPress={() => {
+              // Set skipAuth to true to bypass authentication
+              setSkipAuth(true)
+            }}
+          >
+            <Text style={styles.skipButtonText}>Skip to Main</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity style={[styles.nextButton, { backgroundColor: "#3b82f6" }]} onPress={onNext}>
-            <Text style={styles.nextButtonText}>Next</Text>
+            <Text style={styles.nextButtonText}>Continue</Text>
             <Ionicons name="arrow-forward" size={16} color="#fff" />
           </TouchableOpacity>
         </View>
@@ -199,6 +215,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#374151",
     textAlign: "center",
+  },
+  skipButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  skipButtonText: {
+    fontSize: 16,
+    color: "#6b7280",
+    fontWeight: "500",
   },
 })
 

@@ -7,39 +7,36 @@ import {
   StyleSheet,
   TouchableOpacity,
   TextInput,
+  Switch,
   ScrollView,
   Dimensions,
   ActivityIndicator,
 } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
+
+// Add these imports at the top of the file
 import { auth } from "../../services/firebase"
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth"
-import { createUserProfile } from "../../services/user"
+import { signInWithEmailAndPassword } from "firebase/auth"
 
 const { height } = Dimensions.get("window")
 
-const SignUpStep = ({ width, onNext, onBack, userData, updateUserData, goToSignIn }) => {
+const SignInStep = ({
+  width,
+  onNext,
+  onBack,
+  userData = { email: "", password: "", rememberMe: false },
+  updateUserData = () => {},
+  goToSignUp,
+  goToForgotPassword,
+}) => {
+  // Add these state variables at the top of the component
   const [isLoading, setIsLoading] = useState(false)
   const [authError, setAuthError] = useState(null)
   const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [nameError, setNameError] = useState("")
   const [emailError, setEmailError] = useState("")
   const [passwordError, setPasswordError] = useState("")
-  const [confirmPasswordError, setConfirmPasswordError] = useState("")
   const [isFormValid, setIsFormValid] = useState(false)
-  const [confirmPassword, setConfirmPassword] = useState("")
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-
-  const validateName = (name) => {
-    if (!name) {
-      setNameError("Name is required")
-      return false
-    } else {
-      setNameError("")
-      return true
-    }
-  }
 
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -68,31 +65,12 @@ const SignUpStep = ({ width, onNext, onBack, userData, updateUserData, goToSignI
     }
   }
 
-  const validateConfirmPassword = (confirmPwd) => {
-    if (!confirmPwd) {
-      setConfirmPasswordError("Please confirm your password")
-      return false
-    } else if (confirmPwd !== userData.password) {
-      setConfirmPasswordError("Passwords do not match")
-      return false
-    } else {
-      setConfirmPasswordError("")
-      return true
-    }
-  }
-
   useEffect(() => {
     // Validate form whenever userData changes
-    const isNameValid = validateName(userData.name)
     const isEmailValid = validateEmail(userData.email)
     const isPasswordValid = validatePassword(userData.password)
-    const isConfirmPasswordValid = validateConfirmPassword(confirmPassword)
-    setIsFormValid(isNameValid && isEmailValid && isPasswordValid && isConfirmPasswordValid)
-  }, [userData.name, userData.email, userData.password, confirmPassword])
-
-  const handleNameChange = (text) => {
-    updateUserData({ name: text })
-  }
+    setIsFormValid(isEmailValid && isPasswordValid)
+  }, [userData.email, userData.password])
 
   const handleEmailChange = (text) => {
     updateUserData({ email: text })
@@ -102,11 +80,12 @@ const SignUpStep = ({ width, onNext, onBack, userData, updateUserData, goToSignI
     updateUserData({ password: text })
   }
 
-  const handleConfirmPasswordChange = (text) => {
-    setConfirmPassword(text)
+  const toggleRememberMe = () => {
+    updateUserData({ rememberMe: !userData.rememberMe })
   }
 
-  const handleSignUp = async () => {
+  // Replace the handleSignIn function with this implementation
+  const handleSignIn = async () => {
     if (!isFormValid) return
 
     try {
@@ -114,21 +93,10 @@ const SignUpStep = ({ width, onNext, onBack, userData, updateUserData, goToSignI
       setIsLoading(true)
       setAuthError(null)
 
-      // Create user with Firebase Authentication
-      const userCredential = await createUserWithEmailAndPassword(auth, userData.email, userData.password)
+      // Attempt to sign in with Firebase
+      const userCredential = await signInWithEmailAndPassword(auth, userData.email, userData.password)
 
-      // Update user profile with display name
-      await updateProfile(userCredential.user, {
-        displayName: userData.name,
-      })
-
-      // Create user profile in Firestore
-      await createUserProfile({
-        displayName: userData.name,
-        email: userData.email,
-      })
-
-      // Update user data with Firebase user info
+      // Success - update user data with Firebase user info
       updateUserData({
         uid: userCredential.user.uid,
         emailVerified: userCredential.user.emailVerified,
@@ -141,19 +109,22 @@ const SignUpStep = ({ width, onNext, onBack, userData, updateUserData, goToSignI
       onNext()
     } catch (error) {
       // Handle specific Firebase auth errors
-      let errorMessage = "Sign up failed. Please try again."
+      let errorMessage = "Sign in failed. Please try again."
 
       switch (error.code) {
-        case "auth/email-already-in-use":
-          errorMessage = "Email is already in use."
-          setEmailError(errorMessage)
-          break
         case "auth/invalid-email":
           errorMessage = "Invalid email address format."
           setEmailError(errorMessage)
           break
-        case "auth/weak-password":
-          errorMessage = "Password is too weak."
+        case "auth/user-disabled":
+          errorMessage = "This account has been disabled."
+          break
+        case "auth/user-not-found":
+          errorMessage = "No account found with this email."
+          setEmailError(errorMessage)
+          break
+        case "auth/wrong-password":
+          errorMessage = "Incorrect password."
           setPasswordError(errorMessage)
           break
         default:
@@ -168,16 +139,16 @@ const SignUpStep = ({ width, onNext, onBack, userData, updateUserData, goToSignI
     }
   }
 
-  const handleGoogleSignUp = async () => {
+  const handleGoogleSignIn = async () => {
     try {
       setIsLoading(true)
       setAuthError(null)
 
       // Note: In a real app, you would use Expo's Google authentication
       // For this example, we'll just show a placeholder
-      alert("Google Sign-Up would be implemented here using Expo Google Auth")
+      alert("Google Sign-In would be implemented here using Expo Google Auth")
 
-      // Simulating a successful Google sign-up
+      // Simulating a successful Google sign-in
       // In a real implementation, you would get a credential from Google
       // and use it to sign in with Firebase
 
@@ -191,14 +162,13 @@ const SignUpStep = ({ width, onNext, onBack, userData, updateUserData, goToSignI
       updateUserData({
         uid: "google-user-id", // This would come from the actual Google sign-in
         emailVerified: true,
-        name: "Google User", // This would come from Google profile
       })
 
       // Proceed to next step
       onNext()
     } catch (error) {
-      console.error("Google sign-up error:", error)
-      setAuthError("Google sign-up failed. Please try again.")
+      console.error("Google sign-in error:", error)
+      setAuthError("Google sign-in failed. Please try again.")
       setIsAuthenticated(false)
     } finally {
       setIsLoading(false)
@@ -210,7 +180,7 @@ const SignUpStep = ({ width, onNext, onBack, userData, updateUserData, goToSignI
     if (isAuthenticated) {
       onNext()
     } else {
-      setAuthError("Please create an account to continue")
+      setAuthError("Please sign in to continue")
     }
   }
 
@@ -218,33 +188,14 @@ const SignUpStep = ({ width, onNext, onBack, userData, updateUserData, goToSignI
     <View style={[styles.container, { width }]}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
-          <View style={[styles.iconContainer, { backgroundColor: "#ec4899" }]}>
-            <Ionicons name="person-add" size={32} color="#fff" />
+          <View style={[styles.iconContainer, { backgroundColor: "#10b981" }]}>
+            <Ionicons name="log-in" size={32} color="#fff" />
           </View>
 
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join StudyVerse and start your learning journey</Text>
-
-          {authError && (
-            <View style={styles.errorContainer}>
-              <Ionicons name="alert-circle" size={20} color="#ef4444" />
-              <Text style={styles.errorText}>{authError}</Text>
-            </View>
-          )}
+          <Text style={styles.title}>Sign In</Text>
+          <Text style={styles.subtitle}>Access your personalized learning experience</Text>
 
           <View style={styles.formContainer}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Full Name</Text>
-              <TextInput
-                style={[styles.input, nameError ? styles.inputError : null]}
-                placeholder="John Doe"
-                placeholderTextColor="#9ca3af"
-                value={userData.name}
-                onChangeText={handleNameChange}
-              />
-              {nameError ? <Text style={styles.errorText}>{nameError}</Text> : null}
-            </View>
-
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Email</Text>
               <TextInput
@@ -260,7 +211,12 @@ const SignUpStep = ({ width, onNext, onBack, userData, updateUserData, goToSignI
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Password</Text>
+              <View style={styles.passwordLabelContainer}>
+                <Text style={styles.inputLabel}>Password</Text>
+                <TouchableOpacity onPress={goToForgotPassword}>
+                  <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+                </TouchableOpacity>
+              </View>
               <View style={[styles.passwordInputContainer, passwordError ? styles.inputError : null]}>
                 <TextInput
                   style={styles.passwordInput}
@@ -280,40 +236,29 @@ const SignUpStep = ({ width, onNext, onBack, userData, updateUserData, goToSignI
               {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
             </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Confirm Password</Text>
-              <View style={[styles.passwordInputContainer, confirmPasswordError ? styles.inputError : null]}>
-                <TextInput
-                  style={styles.passwordInput}
-                  placeholder="••••••••"
-                  placeholderTextColor="#9ca3af"
-                  secureTextEntry={!showConfirmPassword}
-                  value={confirmPassword}
-                  onChangeText={handleConfirmPasswordChange}
-                />
-                <TouchableOpacity
-                  style={styles.passwordVisibilityButton}
-                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                >
-                  <Ionicons name={showConfirmPassword ? "eye-off" : "eye"} size={20} color="#6b7280" />
-                </TouchableOpacity>
-              </View>
-              {confirmPasswordError ? <Text style={styles.errorText}>{confirmPasswordError}</Text> : null}
+            <View style={styles.rememberMeContainer}>
+              <Switch
+                value={userData.rememberMe}
+                onValueChange={toggleRememberMe}
+                trackColor={{ false: "#e5e7eb", true: "#10b981" }}
+                thumbColor="#fff"
+              />
+              <Text style={styles.rememberMeText}>Remember me</Text>
             </View>
 
             <TouchableOpacity
               style={[
-                styles.signUpButton,
-                { backgroundColor: "#ec4899" },
+                styles.signInButton,
+                { backgroundColor: "#10b981" },
                 (!isFormValid || isLoading) && styles.disabledButton,
               ]}
-              onPress={handleSignUp}
+              onPress={handleSignIn}
               disabled={!isFormValid || isLoading}
             >
               {isLoading ? (
                 <ActivityIndicator color="#fff" size="small" />
               ) : (
-                <Text style={styles.signUpButtonText}>Create Account</Text>
+                <Text style={styles.signInButtonText}>Sign In</Text>
               )}
             </TouchableOpacity>
 
@@ -325,20 +270,26 @@ const SignUpStep = ({ width, onNext, onBack, userData, updateUserData, goToSignI
 
             <TouchableOpacity
               style={[styles.googleButton, isLoading && styles.disabledButton]}
-              onPress={handleGoogleSignUp}
+              onPress={handleGoogleSignIn}
               disabled={isLoading}
             >
               <Ionicons name="logo-google" size={20} color="#fff" style={styles.googleIcon} />
-              <Text style={styles.googleButtonText}>Sign up with Google</Text>
+              <Text style={styles.googleButtonText}>Sign in with Google</Text>
             </TouchableOpacity>
 
-            <View style={styles.signInContainer}>
-              <Text style={styles.signInText}>Already have an account? </Text>
-              <TouchableOpacity onPress={goToSignIn}>
-                <Text style={[styles.signInLink, { color: "#ec4899" }]}>Sign In</Text>
+            <View style={styles.signUpContainer}>
+              <Text style={styles.signUpText}>Don't have an account? </Text>
+              <TouchableOpacity onPress={goToSignUp}>
+                <Text style={[styles.signUpLink, { color: "#10b981" }]}>Sign up</Text>
               </TouchableOpacity>
             </View>
           </View>
+          {authError && (
+            <View style={styles.errorContainer}>
+              <Ionicons name="alert-circle" size={20} color="#ef4444" />
+              <Text style={styles.errorText}>{authError}</Text>
+            </View>
+          )}
         </View>
       </ScrollView>
 
@@ -353,7 +304,7 @@ const SignUpStep = ({ width, onNext, onBack, userData, updateUserData, goToSignI
           <TouchableOpacity
             style={[
               styles.nextButton,
-              { backgroundColor: "#ec4899" },
+              { backgroundColor: "#10b981" },
               (!isAuthenticated || isLoading) && styles.disabledButton,
             ]}
             onPress={handleNext}
@@ -403,20 +354,6 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     textAlign: "center",
   },
-  errorContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(239, 68, 68, 0.1)",
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-    width: "100%",
-  },
-  errorText: {
-    color: "#ef4444",
-    marginLeft: 8,
-    fontSize: 14,
-  },
   formContainer: {
     width: "100%",
   },
@@ -442,6 +379,22 @@ const styles = StyleSheet.create({
   inputError: {
     borderColor: "#ef4444",
   },
+  errorText: {
+    color: "#ef4444",
+    fontSize: 14,
+    marginTop: 4,
+  },
+  passwordLabelContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  forgotPasswordText: {
+    fontSize: 14,
+    color: "#3b82f6",
+    fontWeight: "500",
+  },
   passwordInputContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -460,7 +413,17 @@ const styles = StyleSheet.create({
   passwordVisibilityButton: {
     paddingHorizontal: 16,
   },
-  signUpButton: {
+  rememberMeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  rememberMeText: {
+    fontSize: 16,
+    color: "#111827",
+    marginLeft: 8,
+  },
+  signInButton: {
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 14,
@@ -470,7 +433,7 @@ const styles = StyleSheet.create({
   disabledButton: {
     opacity: 0.5,
   },
-  signUpButtonText: {
+  signInButtonText: {
     fontSize: 16,
     fontWeight: "bold",
     color: "#fff",
@@ -507,16 +470,16 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#fff",
   },
-  signInContainer: {
+  signUpContainer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
   },
-  signInText: {
+  signUpText: {
     fontSize: 16,
     color: "#6b7280",
   },
-  signInLink: {
+  signUpLink: {
     fontSize: 16,
     fontWeight: "bold",
   },
@@ -566,7 +529,17 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginRight: 8,
   },
+  errorContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(239, 68, 68, 0.1)",
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 16,
+    marginBottom: 16,
+    width: "100%",
+  },
 })
 
-export default SignUpStep
+export default SignInStep
 

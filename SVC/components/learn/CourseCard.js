@@ -3,20 +3,22 @@
 import { useRef, useEffect } from "react"
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
+import { useNavigation } from "@react-navigation/native"
 
 const CourseCard = ({ course, isExplore = false }) => {
   const scaleAnim = useRef(new Animated.Value(1)).current
   const progressAnim = useRef(new Animated.Value(0)).current
+  const navigation = useNavigation()
 
   useEffect(() => {
-    if (!isExplore) {
+    if (!isExplore && course && course.progress) {
       Animated.timing(progressAnim, {
         toValue: course.progress / 100,
         duration: 600, // Reduced from 1000
         useNativeDriver: false,
       }).start()
     }
-  }, [course.progress, isExplore])
+  }, [course, isExplore])
 
   const handlePressIn = () => {
     Animated.timing(scaleAnim, {
@@ -40,13 +42,35 @@ const CourseCard = ({ course, isExplore = false }) => {
     outputRange: ["0%", "100%"],
   })
 
+  const handlePress = () => {
+    if (course && course.id) {
+      // Log the courseId for debugging
+      console.log("CourseCard pressed with ID:", course.id)
+      // Navigate to CourseDetail screen with courseId
+      navigation.navigate("CourseDetail", { courseId: course.id })
+    } else {
+      console.error("Course or course.id is undefined")
+    }
+  }
+
+  // Guard against undefined course
+  if (!course) {
+    return null
+  }
+
   return (
     <Animated.View
       style={{
         transform: [{ scale: scaleAnim }],
       }}
     >
-      <TouchableOpacity style={styles.card} onPressIn={handlePressIn} onPressOut={handlePressOut} activeOpacity={0.9}>
+      <TouchableOpacity
+        style={styles.card}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={0.9}
+        onPress={handlePress}
+      >
         <View style={styles.iconContainer}>
           <Text style={styles.icon}>{course.icon}</Text>
         </View>

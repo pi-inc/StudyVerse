@@ -5,22 +5,13 @@ import { View, StyleSheet, SafeAreaView, Animated, Dimensions, ScrollView } from
 import { useNavigation } from "@react-navigation/native"
 import WelcomeStep from "../components/onboarding/WelcomeStep"
 import KeyFeaturesStep from "../components/onboarding/KeyFeaturesStep"
-import SignInStep from "../components/onboarding/SignInStep"
-import SignUpStep from "../components/onboarding/SignUpStep"
-import StudyGoalsStep from "../components/onboarding/StudyGoalsStep"
-import LearningStyleStep from "../components/onboarding/LearningStyleStep"
-import StudyTimeStep from "../components/onboarding/StudyTimeStep"
-import SubjectInterestsStep from "../components/onboarding/SubjectInterestsStep"
 
-// Add this import at the top of the file
-import { auth } from "../services/firebase"
-import { signInWithEmailAndPassword } from "firebase/auth"
-import { createUserProfile } from "../services/user" // Import createUserProfile
-
+// Get screen dimensions
 const { width, height } = Dimensions.get("window")
-const TOTAL_STEPS = 8 // Adjusted to match actual number of steps
+const TOTAL_STEPS = 2 // Just the first two steps for now
 
-const OnboardingScreen = () => {
+// Update the component signature to accept setSkipAuth
+const OnboardingScreen = ({ setSkipAuth }) => {
   const navigation = useNavigation()
   const [currentStep, setCurrentStep] = useState(0)
   const scrollViewRef = useRef(null)
@@ -66,8 +57,8 @@ const OnboardingScreen = () => {
       scrollViewRef.current?.scrollTo({ x: nextStep * screenDimensions.width, animated: true })
       updateProgressBar(nextStep)
     } else {
-      // Complete onboarding
-      completeOnboarding()
+      // Navigate to sign in after completing the onboarding steps
+      navigation.navigate("SignIn")
     }
   }
 
@@ -80,31 +71,6 @@ const OnboardingScreen = () => {
     }
   }
 
-  const completeOnboarding = async () => {
-    try {
-      // If user is already authenticated (from SignInStep or SignUpStep)
-      if (userData.uid) {
-        // Save additional user profile data to Firestore
-        await createUserProfile({
-          displayName: userData.name,
-          studyGoal: userData.studyGoal,
-          learningStyle: userData.learningStyle,
-          studyTimeMinutes: userData.studyTimeMinutes,
-          subjects: userData.subjects,
-        })
-      }
-
-      // Navigate to main app
-      navigation.reset({
-        index: 0,
-        routes: [{ name: "Main" }],
-      })
-    } catch (error) {
-      console.error("Error completing onboarding:", error)
-      // Handle error (could show an alert or error message)
-    }
-  }
-
   const updateProgressBar = (step) => {
     Animated.timing(progressAnim, {
       toValue: step / (TOTAL_STEPS - 1),
@@ -113,31 +79,14 @@ const OnboardingScreen = () => {
     }).start()
   }
 
-  // Add this function inside the OnboardingScreen component
-  const testFirebaseAuth = async (email, password) => {
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password)
-      console.log("Firebase Auth Success:", userCredential.user)
-      return userCredential.user
-    } catch (error) {
-      console.error("Firebase Auth Error:", error.code, error.message)
-      throw error
-    }
-  }
-
   const renderProgressBar = () => {
     const progressBarColors = [
       "#8a70ff", // Purple
       "#3b82f6", // Blue
-      "#10b981", // Green
-      "#8a70ff", // Purple
-      "#ec4899", // Pink
-      "#f59e0b", // Orange
-      "#10b981", // Green
     ]
 
     const interpolatedColor = progressAnim.interpolate({
-      inputRange: [0, 0.16, 0.33, 0.5, 0.66, 0.83, 1],
+      inputRange: [0, 1],
       outputRange: progressBarColors,
     })
 
@@ -159,6 +108,8 @@ const OnboardingScreen = () => {
     )
   }
 
+  // Pass setSkipAuth to the child components
+  // Update the ScrollView content to pass setSkipAuth to the child components
   return (
     <SafeAreaView style={styles.container}>
       {renderProgressBar()}
@@ -171,49 +122,12 @@ const OnboardingScreen = () => {
         scrollEnabled={false}
         style={styles.scrollView}
       >
-        <WelcomeStep width={screenDimensions.width} onNext={handleNext} />
-        <KeyFeaturesStep width={screenDimensions.width} onNext={handleNext} onBack={handleBack} />
-        <SignInStep
+        <WelcomeStep width={screenDimensions.width} onNext={handleNext} setSkipAuth={setSkipAuth} />
+        <KeyFeaturesStep
           width={screenDimensions.width}
           onNext={handleNext}
           onBack={handleBack}
-          userData={userData}
-          updateUserData={updateUserData}
-        />
-        <SignUpStep
-          width={screenDimensions.width}
-          onNext={handleNext}
-          onBack={handleBack}
-          userData={userData}
-          updateUserData={updateUserData}
-        />
-        <StudyGoalsStep
-          width={screenDimensions.width}
-          onNext={handleNext}
-          onBack={handleBack}
-          userData={userData}
-          updateUserData={updateUserData}
-        />
-        <LearningStyleStep
-          width={screenDimensions.width}
-          onNext={handleNext}
-          onBack={handleBack}
-          userData={userData}
-          updateUserData={updateUserData}
-        />
-        <StudyTimeStep
-          width={screenDimensions.width}
-          onNext={handleNext}
-          onBack={handleBack}
-          userData={userData}
-          updateUserData={updateUserData}
-        />
-        <SubjectInterestsStep
-          width={screenDimensions.width}
-          onNext={handleNext}
-          onBack={handleBack}
-          userData={userData}
-          updateUserData={updateUserData}
+          setSkipAuth={setSkipAuth}
         />
       </ScrollView>
     </SafeAreaView>

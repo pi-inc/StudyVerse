@@ -1,176 +1,197 @@
 "use client"
 
-import { StatusBar } from "expo-status-bar"
+import { useEffect, useState } from "react"
+import { StatusBar, SafeAreaView, StyleSheet, Platform } from "react-native"
 import { NavigationContainer } from "@react-navigation/native"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import { createNativeStackNavigator } from "@react-navigation/native-stack"
 import { Ionicons } from "@expo/vector-icons"
-import { View, Text } from "react-native"
+import { initializeApp } from "firebase/app"
+import { getAuth, onAuthStateChanged } from "firebase/auth"
+import { colors } from "./styles/theme"
+
+// Screens
 import HomeScreen from "./screens/HomeScreen"
-import CommunityScreen from "./screens/CommunityScreen"
-import PlanScreen from "./screens/PlanScreen"
 import LearnScreen from "./screens/LearnScreen"
-import ReviewScreen from "./screens/ReviewScreen"
+import PlanScreen from "./screens/PlanScreen"
+import CommunityScreen from "./screens/CommunityScreen"
 import ProfileScreen from "./screens/ProfileScreen"
+import CourseDetailScreen from "./screens/CourseDetailScreen"
+import ModuleDetailScreen from "./screens/ModuleDetailScreen"
+import AITutorScreen from "./screens/AITutorScreen"
 import HelpScreen from "./screens/HelpScreen"
 import SettingsScreen from "./screens/SettingsScreen"
-import AboutScreen from "./screens/AboutScreen"
-import AITutorScreen from "./screens/AITutorScreen"
+import ReviewScreen from "./screens/ReviewScreen"
 import OnboardingScreen from "./screens/OnboardingScreen"
-import AITutorButton from "./components/shared/AITutorButton"
-import { app as firebaseApp } from "./services/firebase"
-// Add this import at the top of the file
-import TestScreen from "./screens/TestScreen"
-// Add these imports at the top of the file
-import { useState, useEffect } from "react"
-import { subscribeToAuthChanges } from "./services/auth"
+
+// Auth Components - importing from the correct location
+import SignInStep from "./components/onboarding/SignInStep"
+import SignUpStep from "./components/onboarding/SignUpStep"
+import ForgotPasswordStep from "./components/onboarding/ForgotPasswordStep"
+
+// Components
+import ErrorBoundary from "./components/shared/ErrorBoundary"
+import LoadingScreen from "./components/shared/LoadingScreen"
+
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
+}
+
+// Initialize Firebase
+try {
+  initializeApp(firebaseConfig)
+  console.log("Firebase is initialized")
+} catch (error) {
+  console.error("Firebase initialization error:", error)
+}
 
 const Tab = createBottomTabNavigator()
 const Stack = createNativeStackNavigator()
 
-function TabNavigator() {
+function MainTabs() {
   return (
-    <View style={{ flex: 1 }}>
-      <Tab.Navigator
-        screenOptions={({ route }) => ({
-          headerShown: false,
-          tabBarStyle: {
-            backgroundColor: "#0a0a1a",
-            borderTopWidth: 0,
-            height: 60,
-            paddingBottom: 10,
-          },
-          tabBarActiveTintColor: "#8a70ff",
-          tabBarInactiveTintColor: "#6b7280",
-          tabBarShowLabel: true,
-          tabBarLabelStyle: {
-            fontSize: 12,
-          },
-          tabBarIcon: ({ color, size, focused }) => {
-            let iconName
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName
 
-            if (route.name === "Home") {
-              iconName = focused ? "home" : "home-outline"
-            } else if (route.name === "Plan") {
-              iconName = focused ? "calendar" : "calendar-outline"
-            } else if (route.name === "Learn") {
-              iconName = focused ? "book" : "book-outline"
-            } else if (route.name === "Review") {
-              iconName = focused ? "refresh" : "refresh-outline"
-            } else if (route.name === "Social") {
-              iconName = focused ? "people" : "people-outline"
-            }
+          if (route.name === "Home") {
+            iconName = focused ? "home" : "home-outline"
+          } else if (route.name === "Learn") {
+            iconName = focused ? "book" : "book-outline"
+          } else if (route.name === "Plan") {
+            iconName = focused ? "calendar" : "calendar-outline"
+          } else if (route.name === "Community") {
+            iconName = focused ? "people" : "people-outline"
+          } else if (route.name === "Profile") {
+            iconName = focused ? "person" : "person-outline"
+          }
 
-            return <Ionicons name={iconName} size={size} color={color} />
-          },
-        })}
-      >
-        <Tab.Screen name="Home" component={HomeScreen} />
-        <Tab.Screen name="Plan" component={PlanScreen} />
-        <Tab.Screen name="Learn" component={LearnScreen} />
-        <Tab.Screen name="Review" component={ReviewScreen} />
-        <Tab.Screen name="Social" component={CommunityScreen} />
-      </Tab.Navigator>
-      <AITutorButton />
-    </View>
+          return <Ionicons name={iconName} size={size} color={color} />
+        },
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.text.tertiary,
+        tabBarStyle: {
+          backgroundColor: colors.background.card,
+          borderTopColor: colors.border.dark,
+          paddingTop: 5,
+          paddingBottom: 5,
+          height: 60,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: "500",
+          marginBottom: 5,
+        },
+        headerShown: false,
+      })}
+    >
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Learn" component={LearnScreen} />
+      <Tab.Screen name="Plan" component={PlanScreen} />
+      <Tab.Screen name="Community" component={CommunityScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
+    </Tab.Navigator>
   )
 }
 
-// Replace the existing App component with this updated version
-export default function App() {
-  // Set this to true to show onboarding on app start
-  const showOnboarding = false
-  const [isInitialized, setIsInitialized] = useState(false)
-  const [initError, setInitError] = useState(null)
-  const [user, setUser] = useState(null)
-  const [authLoading, setAuthLoading] = useState(true)
+// Create wrapper components for the auth steps to use as screens
+const SignInScreen = (props) => {
+  const [userData, setUserData] = useState({
+    email: "",
+    password: "",
+    rememberMe: false,
+  })
 
-  useEffect(() => {
-    // Check if Firebase is initialized
-    try {
-      if (firebaseApp) {
-        console.log("Firebase is initialized")
-        setIsInitialized(true)
-      } else {
-        console.warn("Firebase app is not available")
-        // Still allow the app to run even if Firebase isn't initialized
-        setIsInitialized(true)
-      }
-    } catch (error) {
-      console.error("Error checking Firebase initialization:", error)
-      setInitError(error.message)
-      // Still allow the app to run with an error message
-      setIsInitialized(true)
-    }
-  }, [])
-
-  useEffect(() => {
-    // Subscribe to auth state changes
-    const unsubscribe = subscribeToAuthChanges((user) => {
-      setUser(user)
-      setAuthLoading(false)
-    })
-
-    // Cleanup subscription on unmount
-    return () => unsubscribe()
-  }, [])
-
-  if (!isInitialized || authLoading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#0a0a1a" }}>
-        <Text style={{ color: "#fff", fontSize: 18 }}>Loading...</Text>
-      </View>
-    )
+  const updateUserData = (data) => {
+    setUserData((prev) => ({ ...prev, ...data }))
   }
 
   return (
-    <NavigationContainer>
-      <StatusBar style="light" />
-      {initError && (
-        <View
-          style={{
-            backgroundColor: "rgba(239, 68, 68, 0.9)",
-            padding: 10,
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            zIndex: 1000,
-          }}
-        >
-          <Text style={{ color: "#fff", textAlign: "center" }}>Warning: {initError}</Text>
-        </View>
-      )}
-      <Stack.Navigator
-        initialRouteName={user ? "Main" : "Onboarding"}
-        screenOptions={{
-          headerShown: false,
-          animation: "fade", // Changed from "none" to "fade" for smoother transitions
-          contentStyle: { backgroundColor: "#0a0a1a" },
-        }}
-      >
-        {user ? (
-          // Authenticated routes
-          <>
-            <Stack.Screen name="Main" component={TabNavigator} />
-            <Stack.Screen name="Profile" component={ProfileScreen} />
-            <Stack.Screen name="Help" component={HelpScreen} />
-            <Stack.Screen name="Settings" component={SettingsScreen} />
-            <Stack.Screen name="About" component={AboutScreen} />
-            <Stack.Screen name="AITutor" component={AITutorScreen} />
-
-            {/* Add additional screens for deep linking */}
-            <Stack.Screen name="CourseDetails" component={LearnScreen} />
-            <Stack.Screen name="StudySession" component={CommunityScreen} />
-            <Stack.Screen name="Messages" component={CommunityScreen} />
-            <Stack.Screen name="Test" component={TestScreen} />
-          </>
-        ) : (
-          // Unauthenticated routes - only show onboarding
-          <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ gestureEnabled: false }} />
-        )}
-      </Stack.Navigator>
-    </NavigationContainer>
+    <SignInStep
+      {...props}
+      userData={userData}
+      updateUserData={updateUserData}
+      goToSignUp={() => props.navigation.navigate("SignUp")}
+      goToForgotPassword={() => props.navigation.navigate("ForgotPassword")}
+    />
   )
 }
+const SignUpScreen = (props) => <SignUpStep {...props} />
+const ForgotPasswordScreen = (props) => <ForgotPasswordStep {...props} />
+
+export default function App() {
+  const [isLoading, setIsLoading] = useState(true)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [skipAuth, setSkipAuth] = useState(false)
+
+  useEffect(() => {
+    const auth = getAuth()
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setIsAuthenticated(!!user)
+      setIsLoading(false)
+    })
+
+    return () => unsubscribe()
+  }, [])
+
+  if (isLoading) {
+    return <LoadingScreen />
+  }
+
+  return (
+    <ErrorBoundary>
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="light-content" backgroundColor={colors.background.dark} />
+        <NavigationContainer>
+          <Stack.Navigator
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: colors.background.dark },
+            }}
+          >
+            {!isAuthenticated && !skipAuth ? (
+              // Auth screens
+              <>
+                <Stack.Screen
+                  name="Onboarding"
+                  component={(props) => <OnboardingScreen {...props} setSkipAuth={setSkipAuth} />}
+                />
+                <Stack.Screen name="SignIn" component={SignInScreen} />
+                <Stack.Screen name="SignUp" component={SignUpScreen} />
+                <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+              </>
+            ) : (
+              // Main app screens
+              <>
+                <Stack.Screen name="Main" component={MainTabs} />
+                <Stack.Screen name="CourseDetail" component={CourseDetailScreen} />
+                <Stack.Screen name="ModuleDetail" component={ModuleDetailScreen} />
+                <Stack.Screen name="AITutor" component={AITutorScreen} />
+                <Stack.Screen name="Help" component={HelpScreen} />
+                <Stack.Screen name="Settings" component={SettingsScreen} />
+                <Stack.Screen name="Review" component={ReviewScreen} />
+              </>
+            )}
+          </Stack.Navigator>
+        </NavigationContainer>
+      </SafeAreaView>
+    </ErrorBoundary>
+  )
+}
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.background.dark,
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+  },
+})
 

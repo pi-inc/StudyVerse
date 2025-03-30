@@ -1,11 +1,21 @@
 "use client"
 
-import { useRef } from "react"
+import { useState } from "react"
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from "react-native"
 import { Ionicons, Feather } from "@expo/vector-icons"
+import { useNavigation } from "@react-navigation/native"
 
-const RecommendationCard = ({ item }) => {
-  const scaleAnim = useRef(new Animated.Value(1)).current
+const RecommendationCard = ({ item, onPress }) => {
+  const navigation = useNavigation()
+
+  // Guard against undefined item
+  if (!item) {
+    console.warn("RecommendationCard received undefined or null item data")
+    return null
+  }
+
+  console.log("Rendering recommendation card with item:", item)
+  const [scaleAnim] = useState(new Animated.Value(1))
 
   const handlePressIn = () => {
     Animated.timing(scaleAnim, {
@@ -24,13 +34,28 @@ const RecommendationCard = ({ item }) => {
     }).start()
   }
 
+  const handlePress = () => {
+    console.log("RecommendationCard pressed:", item)
+    if (item.type === "AI Tutor") {
+      console.log("Navigating to AI Tutor")
+      navigation.navigate("AITutor")
+    } else if (item.courseId) {
+      console.log("Navigating to course with ID:", item.courseId)
+      navigation.navigate("CourseDetail", { courseId: item.courseId })
+    }
+
+    if (onPress) {
+      onPress(item)
+    }
+  }
+
   const renderIcon = () => {
     // Use Feather icons for git-branch
     if (item.icon === "git-branch") {
       return <Feather name="git-branch" size={24} color="#fff" />
     }
     // Use Ionicons for all other icons
-    return <Ionicons name={item.icon} size={24} color="#fff" />
+    return <Ionicons name={item.icon || "help-circle"} size={24} color="#fff" />
   }
 
   return (
@@ -39,14 +64,20 @@ const RecommendationCard = ({ item }) => {
         transform: [{ scale: scaleAnim }],
       }}
     >
-      <TouchableOpacity style={styles.card} onPressIn={handlePressIn} onPressOut={handlePressOut} activeOpacity={0.9}>
-        <View style={[styles.iconContainer, { backgroundColor: item.iconBgColor }]}>{renderIcon()}</View>
+      <TouchableOpacity
+        style={styles.card}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={0.9}
+        onPress={handlePress}
+      >
+        <View style={[styles.iconContainer, { backgroundColor: item.iconBgColor || "#7c3aed" }]}>{renderIcon()}</View>
         <View style={styles.contentContainer}>
-          <Text style={styles.title}>{item.title}</Text>
+          <Text style={styles.title}>{item.title || "Recommendation"}</Text>
           <View style={styles.typeContainer}>
-            <Text style={styles.typeText}>{item.type}</Text>
+            <Text style={styles.typeText}>{item.type || "Unknown"}</Text>
           </View>
-          <Text style={styles.description}>{item.description}</Text>
+          <Text style={styles.description}>{item.description || "No description available"}</Text>
         </View>
         <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
       </TouchableOpacity>

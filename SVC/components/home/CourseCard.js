@@ -36,9 +36,10 @@ const CourseCard = ({ title, timeAgo, progress, progressColor, navigateTo, cours
   }
 
   const handlePress = () => {
-    if (navigateTo) {
-      navigation.navigate(navigateTo, { courseId })
-    }
+    // Log the courseId for debugging
+    console.log("Home CourseCard pressed with ID:", courseId)
+    // Navigate to CourseDetail screen with courseId
+    navigation.navigate("CourseDetail", { courseId })
   }
 
   const width = progressAnim.interpolate({

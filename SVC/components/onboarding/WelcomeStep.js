@@ -1,9 +1,11 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
+import { useNavigation } from "@react-navigation/native"
 
 const { height } = Dimensions.get("window")
 
-const WelcomeStep = ({ width, onNext }) => {
+const WelcomeStep = ({ width, onNext, setSkipAuth }) => {
+  const navigation = useNavigation()
   return (
     <View style={[styles.container, { width }]}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -56,9 +58,17 @@ const WelcomeStep = ({ width, onNext }) => {
       </ScrollView>
 
       <View style={styles.footer}>
-        <Text style={styles.stepIndicator}>1 of 8</Text>
+        <Text style={styles.stepIndicator}>1 of 2</Text>
         <View style={styles.buttonContainer}>
-          <View style={styles.emptySpace} />
+          <TouchableOpacity
+            style={styles.skipButton}
+            onPress={() => {
+              // Set skipAuth to true to bypass authentication
+              setSkipAuth(true)
+            }}
+          >
+            <Text style={styles.skipButtonText}>Skip to Main</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={[styles.nextButton, { backgroundColor: "#8a70ff" }]} onPress={onNext}>
             <Text style={styles.nextButtonText}>Get Started</Text>
             <Ionicons name="arrow-forward" size={16} color="#fff" />
@@ -179,6 +189,15 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
     marginRight: 8,
+  },
+  skipButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  skipButtonText: {
+    fontSize: 16,
+    color: "#6b7280",
+    fontWeight: "500",
   },
 })
 

@@ -1,26 +1,27 @@
 "use client"
 
-import { useState } from "react"
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native"
+import { useState, useEffect } from "react"
+import { View, Text, StyleSheet, TouchableOpacity, Animated } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
+import { colors } from "../../styles/theme"
 
-const LearnTabs = ({ onTabChange }) => {
-  const [activeTab, setActiveTab] = useState("courses")
+const LearnTabs = ({ onTabChange, activeTab: externalActiveTab }) => {
+  const [activeTab, setActiveTab] = useState(externalActiveTab || "courses")
+  const [indicatorPosition] = useState(new Animated.Value(0))
+  const [indicatorWidth] = useState(new Animated.Value(0))
+
+  useEffect(() => {
+    if (externalActiveTab && externalActiveTab !== activeTab) {
+      setActiveTab(externalActiveTab)
+    }
+  }, [externalActiveTab])
 
   const tabs = [
-    {
-      id: "courses",
-      label: "Courses",
-      icon: "book-outline",
-    },
-    {
-      id: "ai-tutor",
-      label: "AI Tutor",
-      icon: "bulb-outline",
-    },
+    { id: "courses", label: "Courses", icon: "book-outline" },
+    { id: "ai-tutor", label: "AI Tutor", icon: "bulb-outline" },
   ]
 
-  const handleTabPress = (tabId) => {
+  const handleTabPress = (tabId, index) => {
     setActiveTab(tabId)
     if (onTabChange) {
       onTabChange(tabId)
@@ -29,27 +30,38 @@ const LearnTabs = ({ onTabChange }) => {
 
   return (
     <View style={styles.container}>
-      {tabs.map((tab) => (
-        <TouchableOpacity
-          key={tab.id}
-          style={[styles.tab, activeTab === tab.id && styles.activeTab]}
-          onPress={() => handleTabPress(tab.id)}
-        >
-          <Ionicons name={tab.icon} size={20} color="#fff" style={styles.tabIcon} />
-          <Text style={styles.tabText}>{tab.label}</Text>
-        </TouchableOpacity>
-      ))}
+      <View style={styles.tabsContainer}>
+        {tabs.map((tab, index) => (
+          <TouchableOpacity
+            key={tab.id}
+            style={[styles.tab, activeTab === tab.id && styles.activeTab]}
+            onPress={() => handleTabPress(tab.id, index)}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: activeTab === tab.id }}
+          >
+            <Ionicons
+              name={tab.icon}
+              size={20}
+              color={activeTab === tab.id ? colors.primary : colors.text.secondary}
+              style={styles.tabIcon}
+            />
+            <Text style={[styles.tabLabel, activeTab === tab.id && styles.activeTabLabel]}>{tab.label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
+    marginBottom: 20,
+  },
+  tabsContainer: {
     flexDirection: "row",
-    backgroundColor: "#1a1a2e",
+    backgroundColor: colors.background.card,
     borderRadius: 12,
     padding: 4,
-    marginBottom: 24,
   },
   tab: {
     flex: 1,
@@ -57,18 +69,30 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 12,
+    paddingHorizontal: 16,
     borderRadius: 8,
   },
   activeTab: {
-    backgroundColor: "#2d2d44",
+    backgroundColor: colors.background.dark,
   },
   tabIcon: {
     marginRight: 8,
   },
-  tabText: {
-    color: "#fff",
-    fontWeight: "bold",
+  tabLabel: {
     fontSize: 14,
+    fontWeight: "500",
+    color: colors.text.secondary,
+  },
+  activeTabLabel: {
+    color: colors.primary,
+    fontWeight: "bold",
+  },
+  indicator: {
+    position: "absolute",
+    bottom: 0,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: colors.primary,
   },
 })
 

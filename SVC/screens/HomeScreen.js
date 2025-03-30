@@ -1,16 +1,19 @@
 "use client"
 
 import { useRef, useEffect, useState } from "react"
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, Animated, TouchableOpacity } from "react-native"
+import { View, Text, StyleSheet, ScrollView, Animated, TouchableOpacity } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import Header from "../components/shared/Header"
 import StudyStreakCard from "../components/shared/StudyStreakCard"
-import CourseCard from "../components/home/CourseCard"
+import CourseCard from "../components/shared/CourseCard"
 import ActionButton from "../components/home/ActionButton"
 import TodaysPlanCard from "../components/home/TodaysPlanCard"
 import AnimatedListItem from "../components/shared/AnimatedListItem"
 import SkipToContent from "../components/shared/SkipToContent"
 import { useNavigation } from "@react-navigation/native"
+import { colors, spacing } from "../styles/theme"
+import { navigateToCourse, navigateToAITutor } from "../utils/navigation"
+import { getContinueLearningCourses } from "../services/courseData"
 
 export default function HomeScreen() {
   const navigation = useNavigation()
@@ -26,16 +29,33 @@ export default function HomeScreen() {
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState("")
 
+  // Get course data
+  const [continueLearningCourses, setContinueLearningCourses] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    try {
+      const courses = getContinueLearningCourses()
+      console.log("HomeScreen got courses:", courses)
+      setContinueLearningCourses(courses || [])
+    } catch (error) {
+      console.error("Error getting courses:", error)
+      setContinueLearningCourses([])
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 500, // Reduced from 800
+        duration: 500,
         useNativeDriver: true,
       }),
       Animated.timing(translateYAnim, {
         toValue: 0,
-        duration: 500, // Reduced from 800
+        duration: 500,
         useNativeDriver: true,
       }),
     ]).start()
@@ -50,7 +70,7 @@ export default function HomeScreen() {
   }
 
   const handleAITutorPress = () => {
-    navigation.navigate("AITutor")
+    navigateToAITutor(navigation)
     showToastMessage("Opening AI Tutor...")
   }
 
@@ -60,16 +80,27 @@ export default function HomeScreen() {
     }
   }
 
+  const handleCoursePress = (course) => {
+    navigateToCourse(navigation, course.id)
+  }
+
   const headerAnimStyle = {
     opacity: fadeAnim,
     transform: [{ translateY: translateYAnim }],
   }
 
+  console.log("HomeScreen rendering with courses:", continueLearningCourses)
+
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <SkipToContent onPress={skipToContent} />
       <Header />
-      <ScrollView ref={scrollViewRef} style={styles.scrollView} contentInsetAdjustmentBehavior="automatic">
+      <ScrollView
+        ref={scrollViewRef}
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollViewContent}
+        contentInsetAdjustmentBehavior="automatic"
+      >
         <Animated.View style={[styles.welcomeSection, headerAnimStyle]}>
           <Text style={styles.welcomeText}>Welcome back!</Text>
           <View style={styles.purpleDivider} />
@@ -83,34 +114,37 @@ export default function HomeScreen() {
             </View>
           </AnimatedListItem>
 
-          <AnimatedListItem index={1}>
-            <CourseCard
-              title="Introduction to..."
-              timeAgo="2 hours ago"
-              progress={45}
-              progressColor="#a78bfa"
-              navigateTo="Learn"
-              courseId="1"
-            />
-          </AnimatedListItem>
-
-          <AnimatedListItem index={2}>
-            <CourseCard
-              title="Data Structures and..."
-              timeAgo="Yesterday"
-              progress={30}
-              progressColor="#3b82f6"
-              navigateTo="Learn"
-              courseId="2"
-            />
-          </AnimatedListItem>
+          {isLoading ? (
+            <AnimatedListItem index={1}>
+              <View style={styles.loadingState}>
+                <Text style={styles.loadingText}>Loading courses...</Text>
+              </View>
+            </AnimatedListItem>
+          ) : continueLearningCourses && continueLearningCourses.length > 0 ? (
+            continueLearningCourses.map((course, index) => (
+              <AnimatedListItem key={course.id} index={index + 1}>
+                <CourseCard course={course} variant="compact" onPress={handleCoursePress} />
+              </AnimatedListItem>
+            ))
+          ) : (
+            <AnimatedListItem index={1}>
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyStateText}>No courses in progress</Text>
+              </View>
+            </AnimatedListItem>
+          )}
 
           <AnimatedListItem index={3}>
-            <ActionButton icon="book-outline" text="View All Courses" backgroundColor="#7c3aed" navigateTo="Learn" />
+            <ActionButton
+              icon="book-outline"
+              text="View All Courses"
+              backgroundColor={colors.primary}
+              navigateTo="Learn"
+            />
           </AnimatedListItem>
 
           <AnimatedListItem index={4}>
-            <ActionButton icon="bulb-outline" text="Ask AI Tutor" backgroundColor="#06b6d4" navigateTo="AITutor" />
+            <ActionButton icon="bulb-outline" text="Ask AI Tutor" backgroundColor={colors.info} navigateTo="AITutor" />
           </AnimatedListItem>
         </View>
 
@@ -121,6 +155,8 @@ export default function HomeScreen() {
         <AnimatedListItem index={6}>
           <TodaysPlanCard navigateTo="Plan" />
         </AnimatedListItem>
+
+        <View style={styles.bottomPadding} />
       </ScrollView>
 
       {/* Toast Notification */}
@@ -132,18 +168,21 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
       )}
-    </SafeAreaView>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0a0a1a",
+    backgroundColor: colors.background.dark,
   },
   scrollView: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.md,
+  },
+  scrollViewContent: {
+    paddingBottom: 100, // Add padding to the bottom
   },
   welcomeSection: {
     marginTop: 20,
@@ -152,12 +191,12 @@ const styles = StyleSheet.create({
   welcomeText: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#a78bfa",
+    color: colors.primaryLight,
     marginBottom: 10,
   },
   purpleDivider: {
     height: 4,
-    backgroundColor: "#7c3aed",
+    backgroundColor: colors.primary,
     borderRadius: 2,
   },
   section: {
@@ -171,7 +210,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#fff",
+    color: colors.text.primary,
     marginLeft: 8,
   },
   toastContainer: {
@@ -192,7 +231,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   toastText: {
-    color: "#fff",
+    color: colors.text.primary,
     fontSize: 16,
     flex: 1,
   },
@@ -201,6 +240,32 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 100,
+  },
+  emptyState: {
+    backgroundColor: "#1a1a2e",
+    borderRadius: 12,
+    padding: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+    height: 100,
+  },
+  emptyStateText: {
+    color: "#9ca3af",
+    fontSize: 16,
+  },
+  loadingState: {
+    backgroundColor: "#1a1a2e",
+    borderRadius: 12,
+    padding: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+    height: 100,
+  },
+  loadingText: {
+    color: "#9ca3af",
+    fontSize: 16,
   },
 })
 

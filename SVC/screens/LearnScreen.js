@@ -5,16 +5,25 @@ import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, Tex
 import { Ionicons } from "@expo/vector-icons"
 import Header from "../components/shared/Header"
 import LearnTabs from "../components/learn/LearnTabs"
-import CourseCard from "../components/learn/CourseCard"
+import CourseCard from "../components/shared/CourseCard"
 import RecommendationCard from "../components/learn/RecommendationCard"
 import SectionHeader from "../components/shared/SectionHeader"
 import AnimatedListItem from "../components/shared/AnimatedListItem"
 import AITutorView from "../components/learn/AITutorView"
+import { colors, spacing } from "../styles/theme"
+import { navigateToCourse, navigateToAITutor } from "../utils/navigation"
+import { getContinueLearningCourses, getRecommendedCourses, getExploreCourses } from "../services/courseData"
 
-const LearnScreen = ({ route }) => {
+const LearnScreen = ({ route, navigation }) => {
   const [activeTab, setActiveTab] = useState("courses")
   const fadeAnim = useRef(new Animated.Value(0)).current
   const translateYAnim = useRef(new Animated.Value(30)).current
+
+  // Replace the direct assignments with useState and useEffect
+  const [continueLearningCourses, setContinueLearningCourses] = useState([])
+  const [recommendedItems, setRecommendedItems] = useState([])
+  const [exploreCourses, setExploreCourses] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     // Check if we should open AI Tutor tab from navigation params
@@ -38,80 +47,50 @@ const LearnScreen = ({ route }) => {
         useNativeDriver: true,
       }),
     ]).start()
+
+    try {
+      console.log("LearnScreen: Fetching course data")
+      const continueData = getContinueLearningCourses()
+      const recommendData = getRecommendedCourses()
+      const exploreData = getExploreCourses()
+
+      console.log("LearnScreen got continueData:", continueData)
+      console.log("LearnScreen got recommendData:", recommendData)
+      console.log("LearnScreen got exploreData:", exploreData)
+
+      setContinueLearningCourses(continueData || [])
+      setRecommendedItems(recommendData || [])
+      setExploreCourses(exploreData || [])
+    } catch (error) {
+      console.error("Error fetching course data:", error)
+    } finally {
+      setIsLoading(false)
+    }
   }, [])
 
-  const continueLearningCourses = [
-    {
-      id: 1,
-      title: "Introduction to Computer Science",
-      description: "Learn the basics of computer science and...",
-      progress: 65,
-      progressColor: "#a78bfa",
-      category: "Computer Science",
-      level: "Beginner",
-      rating: 4.8,
-      icon: "💻",
-    },
-    {
-      id: 2,
-      title: "Data Structures and Algorithms",
-      description: "Master essential data structures and...",
-      progress: 40,
-      progressColor: "#3b82f6",
-      category: "Computer Science",
-      level: "Intermediate",
-      rating: 4.7,
-      icon: "📊",
-    },
-  ]
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId)
+  }
 
-  const recommendedItems = [
-    {
-      id: 1,
-      title: "Machine Learning Fundamentals",
-      type: "Course",
-      description: "Based on your interests",
-      iconBgColor: "#7c3aed",
-      icon: "book-outline",
-    },
-    {
-      id: 2,
-      title: "Arrays and Linked Lists",
-      type: "Revision",
-      description: "Due for review",
-      iconBgColor: "#3b82f6",
-      icon: "git-branch", // This will now use Feather icon
-    },
-    {
-      id: 3,
-      title: "Need help with a concept?",
-      type: "AI Tutor",
-      description: "Ask the AI Tutor",
-      iconBgColor: "#10b981",
-      icon: "bulb-outline",
-    },
-  ]
+  const handleCoursePress = (course) => {
+    navigateToCourse(navigation, course.id)
+  }
 
-  const exploreCourses = [
-    {
-      id: 1,
-      title: "Machine Learning Fundamentals",
-      description: "Understand the core concepts of machine...",
-      category: "Data Science",
-      level: "Advanced",
-      rating: 4.9,
-      icon: "🤖",
-    },
-  ]
+  const handleRecommendationPress = (item) => {
+    console.log("Recommendation pressed:", item)
+    if (item.type === "AI Tutor") {
+      navigateToAITutor(navigation)
+    } else if (item.courseId) {
+      navigateToCourse(navigation, item.courseId)
+    }
+  }
 
   const headerAnimStyle = {
     opacity: fadeAnim,
     transform: [{ translateY: translateYAnim }],
   }
 
-  const handleTabChange = (tabId) => {
-    setActiveTab(tabId)
-  }
+  console.log("LearnScreen rendering with activeTab:", activeTab)
 
   const renderContent = () => {
     if (activeTab === "ai-tutor") {
@@ -128,11 +107,25 @@ const LearnScreen = ({ route }) => {
           <View style={styles.gradientDivider} />
         </AnimatedListItem>
 
-        {continueLearningCourses.map((course, index) => (
-          <AnimatedListItem key={course.id} index={index + 3}>
-            <CourseCard course={course} />
+        {isLoading ? (
+          <AnimatedListItem index={3}>
+            <View style={styles.loadingState}>
+              <Text style={styles.loadingText}>Loading courses...</Text>
+            </View>
           </AnimatedListItem>
-        ))}
+        ) : continueLearningCourses && continueLearningCourses.length > 0 ? (
+          continueLearningCourses.map((course, index) => (
+            <AnimatedListItem key={course.id} index={index + 3}>
+              <CourseCard course={course} onPress={handleCoursePress} />
+            </AnimatedListItem>
+          ))
+        ) : (
+          <AnimatedListItem index={3}>
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateText}>No courses in progress</Text>
+            </View>
+          </AnimatedListItem>
+        )}
 
         <AnimatedListItem index={5}>
           <SectionHeader title="Recommended for You" />
@@ -142,11 +135,25 @@ const LearnScreen = ({ route }) => {
           <View style={styles.gradientDivider} />
         </AnimatedListItem>
 
-        {recommendedItems.map((item, index) => (
-          <AnimatedListItem key={item.id} index={index + 7}>
-            <RecommendationCard item={item} />
+        {isLoading ? (
+          <AnimatedListItem index={7}>
+            <View style={styles.loadingState}>
+              <Text style={styles.loadingText}>Loading recommendations...</Text>
+            </View>
           </AnimatedListItem>
-        ))}
+        ) : recommendedItems && recommendedItems.length > 0 ? (
+          recommendedItems.map((item, index) => (
+            <AnimatedListItem key={item.id} index={index + 7}>
+              <RecommendationCard item={item} onPress={handleRecommendationPress} />
+            </AnimatedListItem>
+          ))
+        ) : (
+          <AnimatedListItem index={7}>
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateText}>No recommendations available</Text>
+            </View>
+          </AnimatedListItem>
+        )}
 
         <AnimatedListItem index={10}>
           <SectionHeader title="Explore Courses" />
@@ -155,13 +162,17 @@ const LearnScreen = ({ route }) => {
         <AnimatedListItem index={11}>
           <View style={styles.searchContainer}>
             <View style={styles.searchInputContainer}>
-              <Ionicons name="search" size={20} color="#9ca3af" style={styles.searchIcon} />
-              <TextInput style={styles.searchInput} placeholder="Search courses..." placeholderTextColor="#9ca3af" />
+              <Ionicons name="search" size={20} color={colors.text.tertiary} style={styles.searchIcon} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search courses..."
+                placeholderTextColor={colors.text.tertiary}
+              />
             </View>
             <TouchableOpacity style={styles.filterButton}>
-              <Ionicons name="filter" size={18} color="#fff" />
+              <Ionicons name="filter" size={18} color={colors.text.primary} />
               <Text style={styles.filterText}>Filter</Text>
-              <Ionicons name="chevron-down" size={16} color="#fff" />
+              <Ionicons name="chevron-down" size={16} color={colors.text.primary} />
             </TouchableOpacity>
           </View>
         </AnimatedListItem>
@@ -170,11 +181,25 @@ const LearnScreen = ({ route }) => {
           <View style={styles.gradientDivider} />
         </AnimatedListItem>
 
-        {exploreCourses.map((course, index) => (
-          <AnimatedListItem key={course.id} index={index + 13}>
-            <CourseCard course={course} isExplore />
+        {isLoading ? (
+          <AnimatedListItem index={13}>
+            <View style={styles.loadingState}>
+              <Text style={styles.loadingText}>Loading courses...</Text>
+            </View>
           </AnimatedListItem>
-        ))}
+        ) : exploreCourses && exploreCourses.length > 0 ? (
+          exploreCourses.map((course, index) => (
+            <AnimatedListItem key={course.id} index={index + 13}>
+              <CourseCard course={course} showProgress={false} onPress={handleCoursePress} />
+            </AnimatedListItem>
+          ))
+        ) : (
+          <AnimatedListItem index={13}>
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateText}>No courses to explore</Text>
+            </View>
+          </AnimatedListItem>
+        )}
 
         <AnimatedListItem index={14}>
           <TouchableOpacity style={styles.browseAllButton}>
@@ -189,13 +214,13 @@ const LearnScreen = ({ route }) => {
   return (
     <SafeAreaView style={styles.container}>
       <Header />
-      <ScrollView style={styles.scrollView}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent}>
         <Animated.View style={headerAnimStyle}>
           <Text style={styles.pageTitle}>Learn</Text>
         </Animated.View>
 
         <AnimatedListItem index={0}>
-          <LearnTabs onTabChange={handleTabChange} />
+          <LearnTabs onTabChange={handleTabChange} activeTab={activeTab} />
         </AnimatedListItem>
 
         {renderContent()}
@@ -209,22 +234,25 @@ const LearnScreen = ({ route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0a0a1a",
+    backgroundColor: colors.background.dark,
   },
   scrollView: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.md,
+  },
+  scrollViewContent: {
+    paddingBottom: 100, // Add padding to the bottom
   },
   pageTitle: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#a78bfa",
+    color: colors.primaryLight,
     marginTop: 16,
     marginBottom: 16,
   },
   gradientDivider: {
     height: 4,
-    backgroundColor: "#7c3aed",
+    backgroundColor: colors.primary,
     borderRadius: 2,
     marginBottom: 16,
   },
@@ -236,7 +264,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#1a1a2e",
+    backgroundColor: colors.background.card,
     borderRadius: 8,
     paddingHorizontal: 12,
     marginRight: 8,
@@ -247,19 +275,19 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     height: 40,
-    color: "#fff",
+    color: colors.text.primary,
     fontSize: 14,
   },
   filterButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#1a1a2e",
+    backgroundColor: colors.background.card,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   filterText: {
-    color: "#fff",
+    color: colors.text.primary,
     marginHorizontal: 4,
     fontSize: 14,
   },
@@ -267,19 +295,45 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#7c3aed",
+    backgroundColor: colors.primary,
     borderRadius: 8,
     paddingVertical: 14,
     marginTop: 16,
   },
   browseAllText: {
-    color: "#fff",
+    color: colors.text.primary,
     fontWeight: "bold",
     fontSize: 16,
     marginLeft: 8,
   },
   bottomPadding: {
     height: 100,
+  },
+  emptyState: {
+    backgroundColor: "#1a1a2e",
+    borderRadius: 12,
+    padding: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+    height: 100,
+  },
+  emptyStateText: {
+    color: "#9ca3af",
+    fontSize: 16,
+  },
+  loadingState: {
+    backgroundColor: "#1a1a2e",
+    borderRadius: 12,
+    padding: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+    height: 100,
+  },
+  loadingText: {
+    color: "#9ca3af",
+    fontSize: 16,
   },
 })
 
