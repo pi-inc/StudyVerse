@@ -1,7 +1,12 @@
+"use client"
+
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native"
 import { Feather } from "@expo/vector-icons"
+import { useTheme } from "../../context/ThemeContext"
 
 const CommunityTabs = ({ activeTab, onTabChange }) => {
+  const { theme } = useTheme()
+
   const tabs = [
     { id: "users", label: "Active Users", icon: "users" },
     { id: "groups", label: "Study Groups", icon: "message-square" },
@@ -9,15 +14,31 @@ const CommunityTabs = ({ activeTab, onTabChange }) => {
   ]
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background.secondary }]}>
       {tabs.map((tab) => (
         <TouchableOpacity
           key={tab.id}
-          style={[styles.tab, activeTab === tab.id && styles.activeTab]}
+          style={[
+            styles.tab,
+            activeTab === tab.id && [styles.activeTab, { backgroundColor: theme.colors.background.accent }],
+          ]}
           onPress={() => onTabChange(tab.id)}
         >
-          <Feather name={tab.icon} size={18} color={activeTab === tab.id ? "#fff" : "#6b7280"} style={styles.tabIcon} />
-          <Text style={[styles.tabText, activeTab === tab.id && styles.activeTabText]}>{tab.label}</Text>
+          <Feather
+            name={tab.icon}
+            size={18}
+            color={activeTab === tab.id ? theme.colors.text.primary : theme.colors.text.tertiary}
+            style={styles.tabIcon}
+          />
+          <Text
+            style={[
+              styles.tabText,
+              { color: theme.colors.text.tertiary },
+              activeTab === tab.id && [styles.activeTabText, { color: theme.colors.text.primary }],
+            ]}
+          >
+            {tab.label}
+          </Text>
         </TouchableOpacity>
       ))}
     </View>
@@ -27,10 +48,10 @@ const CommunityTabs = ({ activeTab, onTabChange }) => {
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
-    backgroundColor: "#1a1a2e",
     borderRadius: 12,
     marginBottom: 24,
     overflow: "hidden",
+    // backgroundColor set dynamically
   },
   tab: {
     flex: 1,
@@ -41,18 +62,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   activeTab: {
-    backgroundColor: "#2d2d44",
+    // backgroundColor set dynamically
   },
   tabIcon: {
     marginRight: 6,
+    // color set dynamically
   },
   tabText: {
     fontSize: 12,
-    color: "#6b7280",
+    // color set dynamically
   },
   activeTabText: {
-    color: "#fff",
     fontWeight: "bold",
+    // color set dynamically
   },
 })
 

@@ -10,11 +10,13 @@ import RecommendationCard from "../components/learn/RecommendationCard"
 import SectionHeader from "../components/shared/SectionHeader"
 import AnimatedListItem from "../components/shared/AnimatedListItem"
 import AITutorView from "../components/learn/AITutorView"
-import { colors, spacing } from "../styles/theme"
+import { spacing } from "../styles/theme"
 import { navigateToCourse, navigateToAITutor } from "../utils/navigation"
 import { getContinueLearningCourses, getRecommendedCourses, getExploreCourses } from "../services/courseData"
+import { useTheme } from "../context/ThemeContext"
 
 const LearnScreen = ({ route, navigation }) => {
+  const { theme, isDark } = useTheme()
   const [activeTab, setActiveTab] = useState("courses")
   const fadeAnim = useRef(new Animated.Value(0)).current
   const translateYAnim = useRef(new Animated.Value(30)).current
@@ -104,13 +106,13 @@ const LearnScreen = ({ route, navigation }) => {
         </AnimatedListItem>
 
         <AnimatedListItem index={2}>
-          <View style={styles.gradientDivider} />
+          <View style={[styles.gradientDivider, { backgroundColor: theme.colors.primary }]} />
         </AnimatedListItem>
 
         {isLoading ? (
           <AnimatedListItem index={3}>
-            <View style={styles.loadingState}>
-              <Text style={styles.loadingText}>Loading courses...</Text>
+            <View style={[styles.loadingState, { backgroundColor: theme.colors.background.secondary }]}>
+              <Text style={[styles.loadingText, { color: theme.colors.text.secondary }]}>Loading courses...</Text>
             </View>
           </AnimatedListItem>
         ) : continueLearningCourses && continueLearningCourses.length > 0 ? (
@@ -121,8 +123,10 @@ const LearnScreen = ({ route, navigation }) => {
           ))
         ) : (
           <AnimatedListItem index={3}>
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyStateText}>No courses in progress</Text>
+            <View style={[styles.emptyState, { backgroundColor: theme.colors.background.secondary }]}>
+              <Text style={[styles.emptyStateText, { color: theme.colors.text.secondary }]}>
+                No courses in progress
+              </Text>
             </View>
           </AnimatedListItem>
         )}
@@ -132,13 +136,15 @@ const LearnScreen = ({ route, navigation }) => {
         </AnimatedListItem>
 
         <AnimatedListItem index={6}>
-          <View style={styles.gradientDivider} />
+          <View style={[styles.gradientDivider, { backgroundColor: theme.colors.primary }]} />
         </AnimatedListItem>
 
         {isLoading ? (
           <AnimatedListItem index={7}>
-            <View style={styles.loadingState}>
-              <Text style={styles.loadingText}>Loading recommendations...</Text>
+            <View style={[styles.loadingState, { backgroundColor: theme.colors.background.secondary }]}>
+              <Text style={[styles.loadingText, { color: theme.colors.text.secondary }]}>
+                Loading recommendations...
+              </Text>
             </View>
           </AnimatedListItem>
         ) : recommendedItems && recommendedItems.length > 0 ? (
@@ -149,8 +155,10 @@ const LearnScreen = ({ route, navigation }) => {
           ))
         ) : (
           <AnimatedListItem index={7}>
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyStateText}>No recommendations available</Text>
+            <View style={[styles.emptyState, { backgroundColor: theme.colors.background.secondary }]}>
+              <Text style={[styles.emptyStateText, { color: theme.colors.text.secondary }]}>
+                No recommendations available
+              </Text>
             </View>
           </AnimatedListItem>
         )}
@@ -161,30 +169,30 @@ const LearnScreen = ({ route, navigation }) => {
 
         <AnimatedListItem index={11}>
           <View style={styles.searchContainer}>
-            <View style={styles.searchInputContainer}>
-              <Ionicons name="search" size={20} color={colors.text.tertiary} style={styles.searchIcon} />
+            <View style={[styles.searchInputContainer, { backgroundColor: theme.colors.background.card }]}>
+              <Ionicons name="search" size={20} color={theme.colors.text.tertiary} style={styles.searchIcon} />
               <TextInput
-                style={styles.searchInput}
+                style={[styles.searchInput, { color: theme.colors.text.primary }]}
                 placeholder="Search courses..."
-                placeholderTextColor={colors.text.tertiary}
+                placeholderTextColor={theme.colors.text.tertiary}
               />
             </View>
-            <TouchableOpacity style={styles.filterButton}>
-              <Ionicons name="filter" size={18} color={colors.text.primary} />
-              <Text style={styles.filterText}>Filter</Text>
-              <Ionicons name="chevron-down" size={16} color={colors.text.primary} />
+            <TouchableOpacity style={[styles.filterButton, { backgroundColor: theme.colors.background.card }]}>
+              <Ionicons name="filter" size={18} color={theme.colors.text.primary} />
+              <Text style={[styles.filterText, { color: theme.colors.text.primary }]}>Filter</Text>
+              <Ionicons name="chevron-down" size={16} color={theme.colors.text.primary} />
             </TouchableOpacity>
           </View>
         </AnimatedListItem>
 
         <AnimatedListItem index={12}>
-          <View style={styles.gradientDivider} />
+          <View style={[styles.gradientDivider, { backgroundColor: theme.colors.primary }]} />
         </AnimatedListItem>
 
         {isLoading ? (
           <AnimatedListItem index={13}>
-            <View style={styles.loadingState}>
-              <Text style={styles.loadingText}>Loading courses...</Text>
+            <View style={[styles.loadingState, { backgroundColor: theme.colors.background.secondary }]}>
+              <Text style={[styles.loadingText, { color: theme.colors.text.secondary }]}>Loading courses...</Text>
             </View>
           </AnimatedListItem>
         ) : exploreCourses && exploreCourses.length > 0 ? (
@@ -195,16 +203,16 @@ const LearnScreen = ({ route, navigation }) => {
           ))
         ) : (
           <AnimatedListItem index={13}>
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyStateText}>No courses to explore</Text>
+            <View style={[styles.emptyState, { backgroundColor: theme.colors.background.secondary }]}>
+              <Text style={[styles.emptyStateText, { color: theme.colors.text.secondary }]}>No courses to explore</Text>
             </View>
           </AnimatedListItem>
         )}
 
         <AnimatedListItem index={14}>
-          <TouchableOpacity style={styles.browseAllButton}>
-            <Ionicons name="book-outline" size={20} color="#fff" />
-            <Text style={styles.browseAllText}>Browse All Courses</Text>
+          <TouchableOpacity style={[styles.browseAllButton, { backgroundColor: theme.colors.primary }]}>
+            <Ionicons name="book-outline" size={20} color={isDark ? "#fff" : "#fff"} />
+            <Text style={[styles.browseAllText, { color: isDark ? "#fff" : "#fff" }]}>Browse All Courses</Text>
           </TouchableOpacity>
         </AnimatedListItem>
       </>
@@ -212,11 +220,11 @@ const LearnScreen = ({ route, navigation }) => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
       <Header />
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent}>
         <Animated.View style={headerAnimStyle}>
-          <Text style={styles.pageTitle}>Learn</Text>
+          <Text style={[styles.pageTitle, { color: theme.colors.primaryLight }]}>Learn</Text>
         </Animated.View>
 
         <AnimatedListItem index={0}>
@@ -234,7 +242,6 @@ const LearnScreen = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background.dark,
   },
   scrollView: {
     flex: 1,
@@ -246,13 +253,11 @@ const styles = StyleSheet.create({
   pageTitle: {
     fontSize: 24,
     fontWeight: "bold",
-    color: colors.primaryLight,
     marginTop: 16,
     marginBottom: 16,
   },
   gradientDivider: {
     height: 4,
-    backgroundColor: colors.primary,
     borderRadius: 2,
     marginBottom: 16,
   },
@@ -264,7 +269,6 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.background.card,
     borderRadius: 8,
     paddingHorizontal: 12,
     marginRight: 8,
@@ -275,19 +279,16 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     height: 40,
-    color: colors.text.primary,
     fontSize: 14,
   },
   filterButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.background.card,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   filterText: {
-    color: colors.text.primary,
     marginHorizontal: 4,
     fontSize: 14,
   },
@@ -295,13 +296,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.primary,
     borderRadius: 8,
     paddingVertical: 14,
     marginTop: 16,
   },
   browseAllText: {
-    color: colors.text.primary,
     fontWeight: "bold",
     fontSize: 16,
     marginLeft: 8,
@@ -310,7 +309,6 @@ const styles = StyleSheet.create({
     height: 100,
   },
   emptyState: {
-    backgroundColor: "#1a1a2e",
     borderRadius: 12,
     padding: 16,
     alignItems: "center",
@@ -319,11 +317,9 @@ const styles = StyleSheet.create({
     height: 100,
   },
   emptyStateText: {
-    color: "#9ca3af",
     fontSize: 16,
   },
   loadingState: {
-    backgroundColor: "#1a1a2e",
     borderRadius: 12,
     padding: 16,
     alignItems: "center",
@@ -332,7 +328,6 @@ const styles = StyleSheet.create({
     height: 100,
   },
   loadingText: {
-    color: "#9ca3af",
     fontSize: 16,
   },
 })

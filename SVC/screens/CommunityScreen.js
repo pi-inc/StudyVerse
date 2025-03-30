@@ -8,8 +8,10 @@ import CommunityTabs from "../components/community/CommunityTabs"
 import UserCard from "../components/community/UserCard.js"
 import FindStudyBuddiesButton from "../components/community/FindStudyBuddiesButton"
 import AnimatedListItem from "../components/shared/AnimatedListItem"
+import { useTheme } from "../context/ThemeContext"
 
 const CommunityScreen = () => {
+  const { theme } = useTheme()
   const [activeTab, setActiveTab] = useState("users")
   const fadeAnim = useRef(new Animated.Value(0)).current
   const translateYAnim = useRef(new Animated.Value(30)).current
@@ -87,13 +89,13 @@ const CommunityScreen = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
       <Header
         title="Study Community"
         showBackButton={true}
         rightButton={
           <TouchableOpacity style={styles.chatButton}>
-            <Feather name="message-circle" size={24} color="white" />
+            <Feather name="message-circle" size={24} color={theme.colors.text.primary} />
           </TouchableOpacity>
         }
       />
@@ -101,12 +103,12 @@ const CommunityScreen = () => {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <Animated.View style={headerAnimStyle}>
           {/* Search Bar */}
-          <View style={styles.searchContainer}>
-            <Feather name="search" size={20} color="#6b7280" style={styles.searchIcon} />
+          <View style={[styles.searchContainer, { backgroundColor: theme.colors.background.secondary }]}>
+            <Feather name="search" size={20} color={theme.colors.text.tertiary} style={styles.searchIcon} />
             <TextInput
-              style={styles.searchInput}
+              style={[styles.searchInput, { color: theme.colors.text.primary }]}
               placeholder="Search users, groups, topics..."
-              placeholderTextColor="#6b7280"
+              placeholderTextColor={theme.colors.text.tertiary}
             />
           </View>
         </Animated.View>
@@ -121,8 +123,8 @@ const CommunityScreen = () => {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <View style={styles.sectionTitleContainer}>
-                <Feather name="star" size={20} color="#8a70ff" style={styles.sectionIcon} />
-                <Text style={styles.sectionTitle}>Studying Similar Topics</Text>
+                <Feather name="star" size={20} color={theme.colors.primary} style={styles.sectionIcon} />
+                <Text style={[styles.sectionTitle, { color: theme.colors.text.primary }]}>Studying Similar Topics</Text>
               </View>
             </View>
           </View>
@@ -137,7 +139,7 @@ const CommunityScreen = () => {
         <AnimatedListItem index={5}>
           {/* Find Study Partners Section */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Find Study Partners</Text>
+            <Text style={[styles.sectionTitle, { color: theme.colors.text.primary }]}>Find Study Partners</Text>
             <FindStudyBuddiesButton navigateTo="Community" />
           </View>
         </AnimatedListItem>
@@ -145,8 +147,8 @@ const CommunityScreen = () => {
 
       {/* Floating Action Button */}
       <Animated.View style={[styles.fabContainer, fabAnimStyle]}>
-        <TouchableOpacity style={styles.fab}>
-          <Feather name="plus" size={24} color="white" />
+        <TouchableOpacity style={[styles.fab, { backgroundColor: theme.colors.primary }]}>
+          <Feather name="plus" size={24} color={theme.colors.text.primary} />
         </TouchableOpacity>
       </Animated.View>
     </View>
@@ -156,7 +158,7 @@ const CommunityScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0a0a1a",
+    // backgroundColor set dynamically
   },
   content: {
     flex: 1,
@@ -171,7 +173,7 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#1a1a2e",
+    // backgroundColor set dynamically
     borderRadius: 12,
     paddingHorizontal: 16,
     marginBottom: 16,
@@ -182,7 +184,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     height: 48,
-    color: "white",
+    // color set dynamically
     fontSize: 16,
   },
   section: {
@@ -204,7 +206,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "white",
+    // color set dynamically
     marginBottom: 16,
   },
   fabContainer: {
@@ -216,7 +218,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: "#8a70ff",
+    // backgroundColor set dynamically
     alignItems: "center",
     justifyContent: "center",
     elevation: 4,

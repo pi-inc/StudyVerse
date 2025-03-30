@@ -8,8 +8,10 @@ import DeadlineCard from "../components/Plan/DeadlineCard"
 import PomodoroTip from "../components/Plan/PomodoroTip"
 import Header from "../components/shared/Header"
 import AnimatedListItem from "../components/shared/AnimatedListItem"
+import { useTheme } from "../context/ThemeContext"
 
 const PlanScreen = () => {
+  const { theme } = useTheme()
   const [selectedView, setSelectedView] = useState("Day")
   const [showCompleted, setShowCompleted] = useState(true)
 
@@ -128,38 +130,47 @@ const PlanScreen = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
       <Header />
 
       <ScrollView style={styles.scrollView}>
         <Animated.View style={headerAnimStyle}>
-          <Text style={styles.pageTitle}>Planner</Text>
+          <Text style={[styles.pageTitle, { color: theme.colors.primary }]}>Planner</Text>
         </Animated.View>
 
         <AnimatedListItem index={0}>
           <View style={styles.dateNavigation}>
             <TouchableOpacity>
-              <Ionicons name="chevron-back" size={24} color="#a78bfa" />
+              <Ionicons name="chevron-back" size={24} color={theme.colors.primary} />
             </TouchableOpacity>
             <View style={styles.dateContainer}>
-              <Ionicons name="calendar-outline" size={20} color="#a78bfa" style={styles.dateIcon} />
-              <Text style={styles.dateText}>Wednesday, March 26</Text>
+              <Ionicons name="calendar-outline" size={20} color={theme.colors.primary} style={styles.dateIcon} />
+              <Text style={[styles.dateText, { color: theme.colors.text.primary }]}>Wednesday, March 26</Text>
             </View>
             <TouchableOpacity>
-              <Ionicons name="chevron-forward" size={24} color="#a78bfa" />
+              <Ionicons name="chevron-forward" size={24} color={theme.colors.primary} />
             </TouchableOpacity>
           </View>
         </AnimatedListItem>
 
         <AnimatedListItem index={1}>
-          <View style={styles.viewToggle}>
+          <View style={[styles.viewToggle, { backgroundColor: theme.colors.background.secondary }]}>
             {["Day", "Week", "Month"].map((view) => (
               <TouchableOpacity
                 key={view}
-                style={[styles.viewButton, selectedView === view && styles.viewButtonActive]}
+                style={[
+                  styles.viewButton,
+                  selectedView === view && [styles.viewButtonActive, { backgroundColor: theme.colors.primary }],
+                ]}
                 onPress={() => setSelectedView(view)}
               >
-                <Text style={[styles.viewButtonText, selectedView === view && styles.viewButtonTextActive]}>
+                <Text
+                  style={[
+                    styles.viewButtonText,
+                    { color: theme.colors.text.tertiary },
+                    selectedView === view && [styles.viewButtonTextActive, { color: theme.colors.text.primary }],
+                  ]}
+                >
                   {view}
                 </Text>
               </TouchableOpacity>
@@ -171,12 +182,17 @@ const PlanScreen = () => {
           <View style={styles.statsContainer}>
             {stats.map((stat) => (
               <View key={stat.id} style={styles.statItem}>
-                <Text style={styles.statTitle}>{stat.title}</Text>
+                <Text style={[styles.statTitle, { color: theme.colors.text.tertiary }]}>{stat.title}</Text>
                 <View style={styles.statValueContainer}>
-                  <Text style={styles.statValue}>{stat.value}</Text>
-                  <Text style={styles.statUnit}>{stat.unit}</Text>
+                  <Text style={[styles.statValue, { color: theme.colors.text.primary }]}>{stat.value}</Text>
+                  <Text style={[styles.statUnit, { color: theme.colors.text.tertiary }]}>{stat.unit}</Text>
                   {stat.change && (
-                    <Text style={[styles.statChange, { color: stat.isPositive ? "#10b981" : "#ef4444" }]}>
+                    <Text
+                      style={[
+                        styles.statChange,
+                        { color: stat.isPositive ? theme.colors.success : theme.colors.danger },
+                      ]}
+                    >
                       {stat.change}
                     </Text>
                   )}
@@ -187,18 +203,20 @@ const PlanScreen = () => {
         </AnimatedListItem>
 
         <AnimatedListItem index={3}>
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: theme.colors.background.accent }]} />
         </AnimatedListItem>
 
         <AnimatedListItem index={4}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Today's Tasks</Text>
+            <Text style={[styles.sectionTitle, { color: theme.colors.text.primary }]}>Today's Tasks</Text>
             <View style={styles.sectionActions}>
               <TouchableOpacity style={styles.hideCompletedButton} onPress={() => setShowCompleted(!showCompleted)}>
-                <Text style={styles.hideCompletedText}>{showCompleted ? "Hide completed" : "Show completed"}</Text>
+                <Text style={[styles.hideCompletedText, { color: theme.colors.text.tertiary }]}>
+                  {showCompleted ? "Hide completed" : "Show completed"}
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.filterButton}>
-                <Ionicons name="filter" size={20} color="#a78bfa" />
+                <Ionicons name="filter" size={20} color={theme.colors.primary} />
               </TouchableOpacity>
             </View>
           </View>
@@ -214,7 +232,7 @@ const PlanScreen = () => {
 
         <AnimatedListItem index={9}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Upcoming Deadlines</Text>
+            <Text style={[styles.sectionTitle, { color: theme.colors.text.primary }]}>Upcoming Deadlines</Text>
           </View>
         </AnimatedListItem>
 
@@ -237,7 +255,6 @@ const PlanScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0a0a1a",
   },
   scrollView: {
     flex: 1,
@@ -259,11 +276,9 @@ const styles = StyleSheet.create({
   dateText: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#fff",
   },
   viewToggle: {
     flexDirection: "row",
-    backgroundColor: "#1a1a2e",
     borderRadius: 8,
     padding: 4,
     marginBottom: 20,
@@ -275,14 +290,14 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   viewButtonActive: {
-    backgroundColor: "#7c3aed",
+    // backgroundColor set dynamically
   },
   viewButtonText: {
-    color: "#9ca3af",
     fontWeight: "bold",
+    // color set dynamically
   },
   viewButtonTextActive: {
-    color: "#fff",
+    // color set dynamically
   },
   statsContainer: {
     flexDirection: "row",
@@ -294,7 +309,6 @@ const styles = StyleSheet.create({
   },
   statTitle: {
     fontSize: 14,
-    color: "#9ca3af",
     marginBottom: 4,
   },
   statValueContainer: {
@@ -304,11 +318,9 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#fff",
   },
   statUnit: {
     fontSize: 14,
-    color: "#9ca3af",
     marginLeft: 2,
   },
   statChange: {
@@ -317,13 +329,11 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: "#1f2937",
     marginBottom: 20,
   },
   pageTitle: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#a78bfa",
     marginTop: 16,
     marginBottom: 16,
   },
@@ -336,7 +346,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#fff",
   },
   sectionActions: {
     flexDirection: "row",
@@ -347,7 +356,6 @@ const styles = StyleSheet.create({
   },
   hideCompletedText: {
     fontSize: 14,
-    color: "#9ca3af",
   },
   filterButton: {
     padding: 4,

@@ -3,10 +3,12 @@
 import { useRef, useState } from "react"
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
+import { useTheme } from "../../context/ThemeContext"
 
 const TaskCard = ({ task: initialTask }) => {
   const [task, setTask] = useState(initialTask)
   const scaleAnim = useRef(new Animated.Value(1)).current
+  const { theme } = useTheme()
 
   const handlePressIn = () => {
     Animated.timing(scaleAnim, {
@@ -24,11 +26,11 @@ const TaskCard = ({ task: initialTask }) => {
       useNativeDriver: true,
     }).start()
   }
-  
+
   const toggleCompleted = () => {
     setTask({
       ...task,
-      completed: !task.completed
+      completed: !task.completed,
     })
   }
 
@@ -38,10 +40,19 @@ const TaskCard = ({ task: initialTask }) => {
         transform: [{ scale: scaleAnim }],
       }}
     >
-      <TouchableOpacity style={styles.card} onPressIn={handlePressIn} onPressOut={handlePressOut} activeOpacity={0.9}>
+      <TouchableOpacity
+        style={[styles.card, { backgroundColor: theme.colors.background.secondary }]}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={0.9}
+      >
         <View style={styles.leftSection}>
-          <TouchableOpacity 
-            style={[styles.checkbox, task.completed && styles.checkboxCompleted]}
+          <TouchableOpacity
+            style={[
+              styles.checkbox,
+              { borderColor: theme.colors.primary },
+              task.completed && { backgroundColor: theme.colors.primary },
+            ]}
             onPress={toggleCompleted}
             activeOpacity={0.7}
           >
@@ -49,7 +60,18 @@ const TaskCard = ({ task: initialTask }) => {
           </TouchableOpacity>
         </View>
         <View style={styles.contentSection}>
-          <Text style={[styles.title, task.completed && styles.titleCompleted]}>{task.title}</Text>
+          <Text
+            style={[
+              styles.title,
+              { color: theme.colors.text.primary },
+              task.completed && {
+                textDecorationLine: "line-through",
+                color: theme.colors.text.tertiary,
+              },
+            ]}
+          >
+            {task.title}
+          </Text>
           <View style={styles.tagsContainer}>
             <View
               style={[
@@ -69,12 +91,12 @@ const TaskCard = ({ task: initialTask }) => {
             </View>
           </View>
           <View style={styles.timeContainer}>
-            <Ionicons name="time-outline" size={14} color="#9ca3af" />
-            <Text style={styles.timeText}>{task.time}</Text>
+            <Ionicons name="time-outline" size={14} color={theme.colors.text.tertiary} />
+            <Text style={[styles.timeText, { color: theme.colors.text.tertiary }]}>{task.time}</Text>
           </View>
         </View>
         <TouchableOpacity style={styles.moreButton}>
-          <Ionicons name="ellipsis-horizontal" size={20} color="#9ca3af" />
+          <Ionicons name="ellipsis-horizontal" size={20} color={theme.colors.text.tertiary} />
         </TouchableOpacity>
       </TouchableOpacity>
     </Animated.View>
@@ -84,7 +106,6 @@ const TaskCard = ({ task: initialTask }) => {
 const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
-    backgroundColor: "#1a1a2e",
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -97,12 +118,8 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: "#7c3aed",
     alignItems: "center",
     justifyContent: "center",
-  },
-  checkboxCompleted: {
-    backgroundColor: "#7c3aed",
   },
   contentSection: {
     flex: 1,
@@ -110,12 +127,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#fff",
     marginBottom: 8,
-  },
-  titleCompleted: {
-    textDecorationLine: "line-through",
-    color: "#6b7280",
   },
   tagsContainer: {
     flexDirection: "row",
@@ -146,7 +158,6 @@ const styles = StyleSheet.create({
   },
   timeText: {
     fontSize: 12,
-    color: "#9ca3af",
     marginLeft: 4,
   },
   moreButton: {
@@ -155,3 +166,4 @@ const styles = StyleSheet.create({
 })
 
 export default TaskCard
+
