@@ -2,8 +2,10 @@
 
 import { useRef, useEffect } from "react"
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from "react-native"
+import { useTheme } from "../../context/ThemeContext"
 
 const DeadlineCard = ({ deadline }) => {
+  const { theme } = useTheme()
   const scaleAnim = useRef(new Animated.Value(1)).current
   const progressAnim = useRef(new Animated.Value(0)).current
 
@@ -43,23 +45,28 @@ const DeadlineCard = ({ deadline }) => {
         transform: [{ scale: scaleAnim }],
       }}
     >
-      <TouchableOpacity style={styles.card} onPressIn={handlePressIn} onPressOut={handlePressOut} activeOpacity={0.9}>
+      <TouchableOpacity
+        style={[styles.card, { backgroundColor: theme.colors.background.secondary }]}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={0.9}
+      >
         <View style={styles.header}>
-          <Text style={styles.title}>{deadline.title}</Text>
+          <Text style={[styles.title, { color: theme.colors.text.primary }]}>{deadline.title}</Text>
           <Text style={[styles.dueDate, { color: deadline.dueDateColor }]}>{deadline.dueDate}</Text>
         </View>
-        <Text style={styles.category}>{deadline.category}</Text>
+        <Text style={[styles.category, { color: theme.colors.text.tertiary }]}>{deadline.category}</Text>
         <View style={styles.progressContainer}>
-          <Text style={styles.progressLabel}>Progress</Text>
-          <Text style={styles.progressPercentage}>{deadline.progress}%</Text>
+          <Text style={[styles.progressLabel, { color: theme.colors.text.tertiary }]}>Progress</Text>
+          <Text style={[styles.progressPercentage, { color: theme.colors.text.primary }]}>{deadline.progress}%</Text>
         </View>
-        <View style={styles.progressBarBackground}>
+        <View style={[styles.progressBarBackground, { backgroundColor: theme.colors.background.accent }]}>
           <Animated.View
             style={[
               styles.progressBarFill,
               {
                 width,
-                backgroundColor: deadline.progressColor,
+                backgroundColor: deadline.progressColor || theme.colors.primary,
               },
             ]}
           />
@@ -71,7 +78,6 @@ const DeadlineCard = ({ deadline }) => {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#1a1a2e",
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -85,7 +91,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#fff",
   },
   dueDate: {
     fontSize: 12,
@@ -93,7 +98,6 @@ const styles = StyleSheet.create({
   },
   category: {
     fontSize: 14,
-    color: "#9ca3af",
     marginBottom: 12,
   },
   progressContainer: {
@@ -103,16 +107,13 @@ const styles = StyleSheet.create({
   },
   progressLabel: {
     fontSize: 14,
-    color: "#9ca3af",
   },
   progressPercentage: {
     fontSize: 14,
-    color: "#fff",
     fontWeight: "bold",
   },
   progressBarBackground: {
     height: 8,
-    backgroundColor: "#374151",
     borderRadius: 4,
     overflow: "hidden",
   },
