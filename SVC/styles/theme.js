@@ -1,69 +1,6 @@
-// Theme configuration with support for dark and light modes
+// Theme configuration
 
-// Light theme colors
-const lightColors = {
-  primary: "#7c3aed", // Purple
-  primaryLight: "#a78bfa",
-  secondary: "#3b82f6", // Blue
-  accent: "#10b981", // Green
-  info: "#0ea5e9", // Light blue
-  warning: "#f59e0b", // Orange
-  error: "#ef4444", // Red
-  success: "#10b981", // Green
-
-  background: {
-    primary: "#ffffff",
-    secondary: "#f3f4f6",
-    card: "#ffffff",
-    elevated: "#f9fafb",
-  },
-
-  text: {
-    primary: "#111827", // Very dark gray
-    secondary: "#374151", // Dark gray
-    tertiary: "#6b7280", // Medium gray
-    muted: "#9ca3af", // Light gray
-    inverse: "#f8fafc", // White text for dark backgrounds
-  },
-
-  border: {
-    light: "#e5e7eb",
-    dark: "#d1d5db",
-  },
-}
-
-// Dark theme colors
-const darkColors = {
-  primary: "#7c3aed", // Purple
-  primaryLight: "#a78bfa",
-  secondary: "#3b82f6", // Blue
-  accent: "#10b981", // Green
-  info: "#0ea5e9", // Light blue
-  warning: "#f59e0b", // Orange
-  error: "#ef4444", // Red
-  success: "#10b981", // Green
-
-  background: {
-    primary: "#0f172a", // Dark blue
-    secondary: "#1e293b",
-    card: "#1e293b",
-    elevated: "#334155",
-  },
-
-  text: {
-    primary: "#f8fafc", // Very light gray, almost white
-    secondary: "#cbd5e1", // Light gray
-    tertiary: "#94a3b8", // Medium gray
-    muted: "#64748b", // Dark gray
-    inverse: "#111827", // Dark text for light backgrounds
-  },
-
-  border: {
-    light: "#334155",
-    dark: "#1e293b",
-  },
-}
-
+// Spacing
 export const spacing = {
   xs: 4,
   sm: 8,
@@ -73,57 +10,112 @@ export const spacing = {
   xxl: 48,
 }
 
+// Font sizes
+export const fontSizes = {
+  xs: 12,
+  sm: 14,
+  md: 16,
+  lg: 18,
+  xl: 20,
+  xxl: 24,
+  xxxl: 30,
+}
+
+// Typography
 export const typography = {
-  fontSizes: {
-    xs: 12,
-    sm: 14,
-    md: 16,
-    lg: 18,
-    xl: 20,
-    xxl: 24,
-    xxxl: 30,
+  fontFamily: {
+    regular: "System",
+    medium: "System",
+    bold: "System",
   },
-  fontWeights: {
-    normal: "400",
-    medium: "500",
-    bold: "700",
-  },
-  lineHeights: {
-    none: 1,
+  lineHeight: {
     tight: 1.25,
     normal: 1.5,
     relaxed: 1.75,
-    loose: 2,
+  },
+  fontWeight: {
+    regular: "400",
+    medium: "500",
+    bold: "700",
   },
 }
 
-export const borderRadius = {
-  sm: 4,
-  md: 8,
-  lg: 12,
-  xl: 16,
-  xxl: 24,
-  round: 9999,
+// Base colors (shared between themes)
+export const colors = {
+  primary: "#6366f1", // Indigo
+  primaryLight: "#a5b4fc",
+  primaryDark: "#4338ca",
+  secondary: "#ec4899", // Pink
+  secondaryLight: "#f9a8d4",
+  secondaryDark: "#be185d",
+  success: "#10b981", // Emerald
+  warning: "#f59e0b", // Amber
+  danger: "#ef4444", // Red
+  info: "#3b82f6", // Blue
+  border: {
+    light: "#E1E1E1",
+    dark: "#2C2C2C",
+    primary: "#007AFF",
+    secondary: "#8E8E93",
+  },
+
+  // Background colors
+  background: {
+    dark: "#0f172a", // Slate 900
+    light: "#f8fafc", // Slate 50
+    card: "#1e293b", // Slate 800
+    accent: "#334155", // Slate 700
+  },
+
+  // Text colors
+  text: {
+    primary: "#f8fafc", // Slate 50
+    secondary: "#94a3b8", // Slate 400
+    tertiary: "#64748b", // Slate 500
+    primaryDark: "#0f172a", // Slate 900
+    secondaryDark: "#334155", // Slate 700
+  },
 }
 
-// Export theme configurations
-export const themes = {
-  light: {
-    colors: lightColors,
-    spacing,
-    typography,
-    borderRadius,
-    isDark: false,
+// Light theme
+export const lightTheme = {
+  colors: {
+    ...colors,
+    background: {
+      primary: "#f8fafc", // Slate 50
+      secondary: "#f1f5f9", // Slate 100
+      card: "#ffffff",
+      accent: "#e2e8f0", // Slate 200
+    },
+    text: {
+      primary: "#0f172a", // Slate 900
+      secondary: "#334155", // Slate 700
+      tertiary: "#64748b", // Slate 500
+    },
   },
-  dark: {
-    colors: darkColors,
-    spacing,
-    typography,
-    borderRadius,
-    isDark: true,
-  },
+  spacing,
+  fontSizes,
+  typography,
 }
 
-// For backward compatibility, export the dark theme colors as the default
-export const colors = darkColors
+// Dark theme
+export const darkTheme = {
+  colors: {
+    ...colors,
+    background: {
+      primary: "#0f172a", // Slate 900
+      secondary: "#1e293b", // Slate 800
+      card: "#1e293b", // Slate 800
+      accent: "#334155", // Slate 700
+    },
+    text: {
+      primary: "#f8fafc", // Slate 50
+      secondary: "#94a3b8", // Slate 400
+      tertiary: "#64748b", // Slate 500
+    },
+  },
+  spacing,
+  fontSizes,
+  typography,
+}
 

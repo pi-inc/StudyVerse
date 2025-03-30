@@ -1,7 +1,7 @@
 "use client"
 
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native"
-import { colors, spacing, typography } from "../../styles/theme"
+import { colors, spacing, typography, fontSizes } from "../../styles/theme"
 import AnimatedListItem from "./AnimatedListItem"
 import { Ionicons } from "@expo/vector-icons"
 
@@ -54,12 +54,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sectionTitle: {
-    fontSize: typography.fontSizes.lg,
-    fontWeight: typography.fontWeights.bold,
+    fontSize: fontSizes.lg,
+    fontWeight: typography.fontWeight.bold,
     color: colors.text.primary,
   },
   sectionSubtitle: {
-    fontSize: typography.fontSizes.sm,
+    fontSize: fontSizes.sm,
     color: colors.text.tertiary,
     marginTop: spacing.xs,
   },
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   actionText: {
-    fontSize: typography.fontSizes.sm,
+    fontSize: fontSizes.sm,
     color: colors.primary,
     marginRight: spacing.xs,
   },

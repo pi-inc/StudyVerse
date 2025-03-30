@@ -85,7 +85,7 @@ function MainTabs() {
         tabBarInactiveTintColor: theme.colors.text.tertiary,
         tabBarStyle: {
           backgroundColor: theme.colors.background.card,
-          borderTopColor: theme.colors.border.dark,
+          borderTopColor: theme.colors.background.accent,
           paddingTop: 5,
           paddingBottom: 5,
           height: 60,

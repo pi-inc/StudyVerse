@@ -11,13 +11,14 @@ import TodaysPlanCard from "../components/home/TodaysPlanCard"
 import AnimatedListItem from "../components/shared/AnimatedListItem"
 import SkipToContent from "../components/shared/SkipToContent"
 import { useNavigation } from "@react-navigation/native"
-import { colors, spacing } from "../styles/theme"
+import { useTheme } from "../context/ThemeContext"
 import { navigateToCourse, navigateToAITutor } from "../utils/navigation"
 import { getContinueLearningCourses } from "../services/courseData"
 
 export default function HomeScreen() {
   const navigation = useNavigation()
   const scrollViewRef = useRef(null)
+  const { theme } = useTheme()
   const streakData = {
     days: 7,
     label: "7 day streak",
@@ -92,44 +93,46 @@ export default function HomeScreen() {
   console.log("HomeScreen rendering with courses:", continueLearningCourses)
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
       <SkipToContent onPress={skipToContent} />
       <Header />
       <ScrollView
         ref={scrollViewRef}
-        style={styles.scrollView}
+        style={[styles.scrollView, { paddingHorizontal: theme.spacing.md }]}
         contentContainerStyle={styles.scrollViewContent}
         contentInsetAdjustmentBehavior="automatic"
       >
         <Animated.View style={[styles.welcomeSection, headerAnimStyle]}>
-          <Text style={styles.welcomeText}>Welcome back!</Text>
-          <View style={styles.purpleDivider} />
+          <Text style={[styles.welcomeText, { color: theme.colors.primaryLight }]}>Welcome back!</Text>
+          <View style={[styles.purpleDivider, { backgroundColor: theme.colors.primary }]} />
         </Animated.View>
 
         <View style={styles.section}>
           <AnimatedListItem index={0}>
             <View style={styles.sectionHeader}>
-              <Ionicons name="book-outline" size={24} color="#fff" />
-              <Text style={styles.sectionTitle}>Continue Learning</Text>
+              <Ionicons name="book-outline" size={24} color={theme.colors.text.primary} />
+              <Text style={[styles.sectionTitle, { color: theme.colors.text.primary }]}>Continue Learning</Text>
             </View>
           </AnimatedListItem>
 
           {isLoading ? (
             <AnimatedListItem index={1}>
-              <View style={styles.loadingState}>
-                <Text style={styles.loadingText}>Loading courses...</Text>
+              <View style={[styles.loadingState, { backgroundColor: theme.colors.background.card }]}>
+                <Text style={[styles.loadingText, { color: theme.colors.text.tertiary }]}>Loading courses...</Text>
               </View>
             </AnimatedListItem>
           ) : continueLearningCourses && continueLearningCourses.length > 0 ? (
             continueLearningCourses.map((course, index) => (
               <AnimatedListItem key={course.id} index={index + 1}>
-                <CourseCard course={course} variant="compact" onPress={handleCoursePress} />
+                <CourseCard course={course} variant="compact" onPress={() => handleCoursePress(course)} />
               </AnimatedListItem>
             ))
           ) : (
             <AnimatedListItem index={1}>
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyStateText}>No courses in progress</Text>
+              <View style={[styles.emptyState, { backgroundColor: theme.colors.background.card }]}>
+                <Text style={[styles.emptyStateText, { color: theme.colors.text.tertiary }]}>
+                  No courses in progress
+                </Text>
               </View>
             </AnimatedListItem>
           )}
@@ -138,13 +141,18 @@ export default function HomeScreen() {
             <ActionButton
               icon="book-outline"
               text="View All Courses"
-              backgroundColor={colors.primary}
+              backgroundColor={theme.colors.primary}
               navigateTo="Learn"
             />
           </AnimatedListItem>
 
           <AnimatedListItem index={4}>
-            <ActionButton icon="bulb-outline" text="Ask AI Tutor" backgroundColor={colors.info} navigateTo="AITutor" />
+            <ActionButton
+              icon="bulb-outline"
+              text="Ask AI Tutor"
+              backgroundColor={theme.colors.info}
+              navigateTo="AITutor"
+            />
           </AnimatedListItem>
         </View>
 
@@ -161,10 +169,10 @@ export default function HomeScreen() {
 
       {/* Toast Notification */}
       {showToast && (
-        <View style={styles.toastContainer}>
-          <Text style={styles.toastText}>{toastMessage}</Text>
+        <View style={[styles.toastContainer, { backgroundColor: "rgba(26, 26, 46, 0.9)" }]}>
+          <Text style={[styles.toastText, { color: theme.colors.text.primary }]}>{toastMessage}</Text>
           <TouchableOpacity style={styles.toastCloseButton} onPress={() => setShowToast(false)}>
-            <Ionicons name="close" size={20} color="#fff" />
+            <Ionicons name="close" size={20} color={theme.colors.text.primary} />
           </TouchableOpacity>
         </View>
       )}
@@ -175,11 +183,9 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background.dark,
   },
   scrollView: {
     flex: 1,
-    paddingHorizontal: spacing.md,
   },
   scrollViewContent: {
     paddingBottom: 100, // Add padding to the bottom
@@ -191,12 +197,10 @@ const styles = StyleSheet.create({
   welcomeText: {
     fontSize: 24,
     fontWeight: "bold",
-    color: colors.primaryLight,
     marginBottom: 10,
   },
   purpleDivider: {
     height: 4,
-    backgroundColor: colors.primary,
     borderRadius: 2,
   },
   section: {
@@ -210,7 +214,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    color: colors.text.primary,
     marginLeft: 8,
   },
   toastContainer: {
@@ -218,7 +221,6 @@ const styles = StyleSheet.create({
     bottom: 150,
     left: 20,
     right: 20,
-    backgroundColor: "rgba(26, 26, 46, 0.9)",
     borderRadius: 8,
     padding: 16,
     flexDirection: "row",
@@ -231,7 +233,6 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   toastText: {
-    color: colors.text.primary,
     fontSize: 16,
     flex: 1,
   },
@@ -242,7 +243,6 @@ const styles = StyleSheet.create({
     height: 100,
   },
   emptyState: {
-    backgroundColor: "#1a1a2e",
     borderRadius: 12,
     padding: 16,
     alignItems: "center",
@@ -251,11 +251,9 @@ const styles = StyleSheet.create({
     height: 100,
   },
   emptyStateText: {
-    color: "#9ca3af",
     fontSize: 16,
   },
   loadingState: {
-    backgroundColor: "#1a1a2e",
     borderRadius: 12,
     padding: 16,
     alignItems: "center",
@@ -264,7 +262,6 @@ const styles = StyleSheet.create({
     height: 100,
   },
   loadingText: {
-    color: "#9ca3af",
     fontSize: 16,
   },
 })

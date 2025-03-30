@@ -1,451 +1,238 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native"
-import { Ionicons } from "@expo/vector-icons"
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image } from "react-native"
 import { useNavigation, useRoute } from "@react-navigation/native"
-import ScreenLayout from "../components/shared/ScreenLayout"
-import Card from "../components/shared/Card"
+import Icon from "react-native-vector-icons/Ionicons"
+import { useTheme } from "../context/ThemeContext"
+import { fontSizes, spacing, typography } from "../styles/theme"
+import ProgressBar from "../components/shared/ProgressBar"
+import LessonCard from "../components/learn/LessonCard"
 import Section from "../components/shared/Section"
-import AnimatedFadeIn from "../components/shared/AnimatedFadeIn"
-import { colors, spacing, typography, borderRadius } from "../styles/theme"
-import { getCourseById } from "../services/courseData"
-import { navigateToModule } from "../utils/navigation"
+import { Heading, Paragraph } from "../components/shared/Typography"
 
 const CourseDetailScreen = () => {
   const navigation = useNavigation()
   const route = useRoute()
-  const { courseId } = route.params || {}
-  const [activeTab, setActiveTab] = useState("content")
-  const [course, setCourse] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const { course } = route.params || {}
+  const { theme } = useTheme()
+  const [lessons, setLessons] = useState([])
 
-  // Fetch course data based on courseId
   useEffect(() => {
-    const fetchCourse = async () => {
-      console.log("Fetching course with ID:", courseId)
-      setLoading(true)
-      try {
-        const courseData = await getCourseById(courseId)
-        console.log("CourseDetailScreen got course data:", courseData)
+    // Fetch lessons for this course
+    // This would normally come from an API
+    setLessons([
+      {
+        id: "1",
+        title: "Introduction to the Course",
+        duration: "10 min",
+        completed: true,
+        type: "video",
+      },
+      {
+        id: "2",
+        title: "Basic Concepts and Terminology",
+        duration: "15 min",
+        completed: true,
+        type: "reading",
+      },
+      {
+        id: "3",
+        title: "Practical Applications",
+        duration: "20 min",
+        completed: false,
+        type: "interactive",
+      },
+      {
+        id: "4",
+        title: "Advanced Techniques",
+        duration: "25 min",
+        completed: false,
+        type: "video",
+      },
+      {
+        id: "5",
+        title: "Final Project",
+        duration: "30 min",
+        completed: false,
+        type: "project",
+      },
+    ])
+  }, [])
 
-        if (!courseData) {
-          console.error("No course data found for ID:", courseId)
-          // Handle the case where no course data is found
-          setCourse(null)
-        } else {
-          setCourse(courseData)
-        }
-      } catch (error) {
-        console.error("Error fetching course data:", error)
-        // Handle the error case
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchCourse()
-  }, [courseId])
-
-  const handleBackPress = () => {
-    navigation.goBack()
+  const handleLessonPress = (lesson) => {
+    navigation.navigate("LessonDetail", { lesson, course })
   }
 
-  const handleContinueLearning = () => {
-    // Navigate to the first incomplete module
-    const firstIncompleteModule = course?.modules.find((module) => !module.completed)
-    if (firstIncompleteModule) {
-      navigateToModule(navigation, course.id, firstIncompleteModule.id)
-    }
-  }
-
-  const handleToggleFavorite = () => {
-    // Toggle favorite status
-    setCourse((prev) => ({
-      ...prev,
-      isFavorite: !prev.isFavorite,
-    }))
-  }
-
-  const handleModulePress = (moduleId) => {
-    navigateToModule(navigation, course.id, moduleId)
-  }
-
-  if (loading || !course) {
+  if (!course) {
     return (
-      <ScreenLayout showBack={true} onBackPress={handleBackPress}>
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading course...</Text>
-        </View>
-      </ScreenLayout>
+      <View style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
+        <Text style={{ color: theme.colors.text.primary }}>Course not found</Text>
+      </View>
     )
   }
 
+  const completedLessons = lessons.filter((lesson) => lesson.completed).length
+  const totalLessons = lessons.length
+  const progressPercentage = totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0
+
   return (
-    <ScreenLayout showBack={true} onBackPress={handleBackPress}>
-      <AnimatedFadeIn>
-        {/* Course Header */}
-        <Card variant="flat">
-          <Text style={styles.breadcrumb}>Courses &gt; {course.title}</Text>
+    <ScrollView
+      style={[styles.container, { backgroundColor: theme.colors.background.primary }]}
+      contentContainerStyle={styles.contentContainer}
+    >
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={[styles.backButton, { backgroundColor: theme.colors.background.accent }]}
+          onPress={() => navigation.goBack()}
+        >
+          <Icon name="arrow-back" size={24} color={theme.colors.text.primary} />
+        </TouchableOpacity>
+
+        <View style={styles.courseInfo}>
+          <View style={styles.iconContainer}>
+            <Text style={styles.courseIcon}>{course.icon || "📚"}</Text>
+          </View>
+
           <View style={styles.titleContainer}>
-            <Text style={styles.courseTitle}>{course.title}</Text>
-            <TouchableOpacity onPress={handleToggleFavorite}>
-              <Ionicons
-                name={course.isFavorite ? "heart" : "heart-outline"}
-                size={24}
-                color={course.isFavorite ? colors.error : colors.text.tertiary}
+            <Heading size="lg">{course.title}</Heading>
+            <Paragraph color="secondary">
+              {course.category} • {course.level}
+            </Paragraph>
+
+            <View style={styles.progressContainer}>
+              <ProgressBar
+                progress={course.progress || progressPercentage}
+                color={course.progressColor || theme.colors.primary}
+                height={8}
               />
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.courseDescription}>{course.description}</Text>
-
-          <View style={styles.courseMetaContainer}>
-            <View style={styles.metaItem}>
-              <Text style={styles.metaLabel}>{course.level}</Text>
-            </View>
-            <View style={styles.metaItem}>
-              <Ionicons name="time-outline" size={16} color={colors.text.tertiary} />
-              <Text style={styles.metaLabel}>{course.duration}</Text>
-            </View>
-            <View style={styles.metaItem}>
-              <Ionicons name="people-outline" size={16} color={colors.text.tertiary} />
-              <Text style={styles.metaLabel}>{course.enrolled} enrolled</Text>
-            </View>
-          </View>
-
-          <View style={styles.ratingContainer}>
-            <Text style={styles.ratingText}>{course.rating} rating</Text>
-          </View>
-
-          <View style={styles.progressContainer}>
-            <Text style={styles.progressLabel}>Your progress</Text>
-            <View style={styles.progressBarContainer}>
-              <View style={[styles.progressBar, { width: `${course.progress}%` }]} />
-            </View>
-            <Text style={styles.progressPercentage}>{course.progress}%</Text>
-          </View>
-
-          <TouchableOpacity style={styles.continueButton} onPress={handleContinueLearning}>
-            <Text style={styles.continueButtonText}>Continue Learning</Text>
-          </TouchableOpacity>
-        </Card>
-
-        {/* Tabs */}
-        <View style={styles.tabsContainer}>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === "content" && styles.activeTab]}
-            onPress={() => setActiveTab("content")}
-          >
-            <Text style={[styles.tabText, activeTab === "content" && styles.activeTabText]}>Content</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === "resources" && styles.activeTab]}
-            onPress={() => setActiveTab("resources")}
-          >
-            <Text style={[styles.tabText, activeTab === "resources" && styles.activeTabText]}>Resources</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === "discussions" && styles.activeTab]}
-            onPress={() => setActiveTab("discussions")}
-          >
-            <Text style={[styles.tabText, activeTab === "discussions" && styles.activeTabText]}>Discussions</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Course Modules */}
-        <Section title="Course Modules" showDivider={false}>
-          {course.modules.map((module, index) => (
-            <Card key={module.id} variant="flat" style={styles.moduleItem} onPress={() => handleModulePress(module.id)}>
-              <View style={styles.moduleNumberContainer}>
-                <Text style={styles.moduleNumber}>{index + 1}</Text>
-              </View>
-              <View style={styles.moduleContent}>
-                <Text style={styles.moduleTitle}>{module.title}</Text>
-                <Text style={styles.moduleDescription}>{module.description}</Text>
-                <View style={styles.moduleMeta}>
-                  <Ionicons name="time-outline" size={14} color={colors.text.tertiary} />
-                  <Text style={styles.moduleTime}>{module.duration}</Text>
-                </View>
-              </View>
-              <View style={styles.moduleStatus}>
-                {module.completed ? (
-                  <View style={styles.completedIcon}>
-                    <Ionicons name="checkmark" size={16} color={colors.text.primary} />
-                  </View>
-                ) : null}
-                <Ionicons name="chevron-down" size={20} color={colors.text.tertiary} />
-              </View>
-            </Card>
-          ))}
-        </Section>
-
-        {/* Instructor Section */}
-        <Section title="Instructor">
-          <View style={styles.instructorContainer}>
-            <View style={styles.instructorAvatar}>
-              <Text style={styles.instructorInitials}>
-                {course.instructor.name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")}
+              <Text style={[styles.progressText, { color: theme.colors.text.secondary }]}>
+                {completedLessons}/{totalLessons} lessons completed
               </Text>
             </View>
-            <View style={styles.instructorInfo}>
-              <Text style={styles.instructorName}>{course.instructor.name}</Text>
-              <Text style={styles.instructorTitle}>{course.instructor.title}</Text>
-            </View>
           </View>
-          <TouchableOpacity style={styles.viewProfileButton}>
-            <Text style={styles.viewProfileText}>View Profile</Text>
-          </TouchableOpacity>
-        </Section>
+        </View>
+      </View>
 
-        {/* What You'll Learn Section */}
-        <Section title="What You'll Learn">
-          {course.learningOutcomes.map((outcome, index) => (
-            <View key={index} style={styles.outcomeItem}>
-              <View style={styles.outcomeCheckmark}>
-                <Ionicons name="checkmark" size={16} color={colors.success} />
-              </View>
-              <Text style={styles.outcomeText}>{outcome}</Text>
-            </View>
+      {/* Description */}
+      <Section title="About this course">
+        <Paragraph>
+          {course.description ||
+            "This course will teach you the fundamentals and advanced concepts of the subject matter."}
+        </Paragraph>
+      </Section>
+
+      {/* Lessons */}
+      <Section title="Course Content" subtitle={`${totalLessons} lessons • ${calculateTotalDuration(lessons)} total`}>
+        <View style={styles.lessonsList}>
+          {lessons.map((lesson) => (
+            <LessonCard key={lesson.id} lesson={lesson} onPress={() => handleLessonPress(lesson)} />
           ))}
-        </Section>
-      </AnimatedFadeIn>
-    </ScreenLayout>
+        </View>
+      </Section>
+
+      {/* Instructor */}
+      <Section title="Instructor">
+        <View style={styles.instructorContainer}>
+          <Image source={{ uri: "https://randomuser.me/api/portraits/men/32.jpg" }} style={styles.instructorImage} />
+          <View style={styles.instructorInfo}>
+            <Text style={[styles.instructorName, { color: theme.colors.text.primary }]}>Dr. Alex Johnson</Text>
+            <Text style={[styles.instructorRole, { color: theme.colors.text.secondary }]}>
+              Professor of Computer Science
+            </Text>
+          </View>
+        </View>
+      </Section>
+    </ScrollView>
   )
 }
 
+// Helper function to calculate total duration
+const calculateTotalDuration = (lessons) => {
+  const totalMinutes = lessons.reduce((total, lesson) => {
+    const duration = lesson.duration || ""
+    const minutes = Number.parseInt(duration.split(" ")[0]) || 0
+    return total + minutes
+  }, 0)
+
+  if (totalMinutes < 60) {
+    return `${totalMinutes} min`
+  } else {
+    const hours = Math.floor(totalMinutes / 60)
+    const minutes = totalMinutes % 60
+    return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`
+  }
+}
+
 const styles = StyleSheet.create({
-  loadingContainer: {
+  container: {
     flex: 1,
+  },
+  contentContainer: {
+    padding: spacing.lg,
+  },
+  header: {
+    marginBottom: spacing.lg,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
-  },
-  loadingText: {
-    fontSize: typography.fontSizes.md,
-    color: colors.text.tertiary,
-  },
-  breadcrumb: {
-    fontSize: typography.fontSizes.sm,
-    color: colors.text.tertiary,
-    marginBottom: spacing.xs,
-  },
-  titleContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: spacing.xs,
-  },
-  courseTitle: {
-    fontSize: typography.fontSizes.xxl,
-    fontWeight: typography.fontWeights.bold,
-    color: colors.text.primary,
-    flex: 1,
-    marginRight: spacing.xs,
-  },
-  courseDescription: {
-    fontSize: typography.fontSizes.md,
-    color: colors.text.secondary,
-    lineHeight: typography.lineHeights.normal,
     marginBottom: spacing.md,
   },
-  courseMetaContainer: {
+  courseInfo: {
     flexDirection: "row",
-    marginBottom: spacing.md,
+    alignItems: "flex-start",
   },
-  metaItem: {
-    flexDirection: "row",
+  iconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 12,
+    backgroundColor: "#f0f0f0",
+    justifyContent: "center",
     alignItems: "center",
     marginRight: spacing.md,
   },
-  metaLabel: {
-    fontSize: typography.fontSizes.sm,
-    color: colors.text.tertiary,
-    marginLeft: spacing.xs,
+  courseIcon: {
+    fontSize: fontSizes.xxl,
   },
-  ratingContainer: {
-    marginBottom: spacing.md,
-  },
-  ratingText: {
-    fontSize: typography.fontSizes.sm,
-    fontWeight: typography.fontWeights.bold,
-    color: colors.warning,
+  titleContainer: {
+    flex: 1,
   },
   progressContainer: {
-    marginBottom: spacing.md,
+    marginTop: spacing.md,
   },
-  progressLabel: {
-    fontSize: typography.fontSizes.sm,
-    color: colors.text.tertiary,
-    marginBottom: spacing.xs,
+  progressText: {
+    marginTop: spacing.xs,
+    fontSize: fontSizes.sm,
   },
-  progressBarContainer: {
-    height: 8,
-    backgroundColor: colors.background.input,
-    borderRadius: 4,
-    marginBottom: spacing.xs,
-    overflow: "hidden",
-  },
-  progressBar: {
-    height: "100%",
-    backgroundColor: colors.primary,
-    borderRadius: 4,
-  },
-  progressPercentage: {
-    fontSize: typography.fontSizes.sm,
-    color: colors.text.tertiary,
-    textAlign: "right",
-  },
-  continueButton: {
-    backgroundColor: colors.primary,
-    borderRadius: borderRadius.md,
-    paddingVertical: spacing.sm,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  continueButtonText: {
-    color: colors.text.primary,
-    fontSize: typography.fontSizes.md,
-    fontWeight: typography.fontWeights.bold,
-  },
-  tabsContainer: {
-    flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    marginBottom: spacing.md,
-  },
-  tab: {
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    marginRight: spacing.xs,
-  },
-  activeTab: {
-    borderBottomWidth: 2,
-    borderBottomColor: colors.primary,
-  },
-  tabText: {
-    fontSize: typography.fontSizes.md,
-    color: colors.text.tertiary,
-  },
-  activeTabText: {
-    color: colors.primary,
-    fontWeight: typography.fontWeights.bold,
-  },
-  moduleItem: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  moduleNumberContainer: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: colors.background.input,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: spacing.sm,
-    marginTop: 2,
-  },
-  moduleNumber: {
-    fontSize: typography.fontSizes.sm,
-    fontWeight: typography.fontWeights.bold,
-    color: colors.text.tertiary,
-  },
-  moduleContent: {
-    flex: 1,
-    marginRight: spacing.xs,
-  },
-  moduleTitle: {
-    fontSize: typography.fontSizes.md,
-    fontWeight: typography.fontWeights.bold,
-    color: colors.text.primary,
-    marginBottom: spacing.xs,
-  },
-  moduleDescription: {
-    fontSize: typography.fontSizes.sm,
-    color: colors.text.tertiary,
-    marginBottom: spacing.xs,
-  },
-  moduleMeta: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  moduleTime: {
-    fontSize: typography.fontSizes.xs,
-    color: colors.text.tertiary,
-    marginLeft: spacing.xs,
-  },
-  moduleStatus: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  completedIcon: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: colors.success,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: spacing.xs,
+  lessonsList: {
+    marginTop: spacing.md,
   },
   instructorContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: spacing.md,
+    marginTop: spacing.sm,
   },
-  instructorAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.background.input,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: spacing.sm,
-  },
-  instructorInitials: {
-    fontSize: typography.fontSizes.lg,
-    fontWeight: typography.fontWeights.bold,
-    color: colors.text.tertiary,
+  instructorImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: spacing.md,
   },
   instructorInfo: {
     flex: 1,
   },
   instructorName: {
-    fontSize: typography.fontSizes.md,
-    fontWeight: typography.fontWeights.bold,
-    color: colors.text.primary,
-    marginBottom: spacing.xs,
+    fontSize: fontSizes.md,
+    fontWeight: typography.fontWeight.bold,
   },
-  instructorTitle: {
-    fontSize: typography.fontSizes.sm,
-    color: colors.text.tertiary,
-  },
-  viewProfileButton: {
-    alignItems: "center",
-    paddingVertical: spacing.xs,
-  },
-  viewProfileText: {
-    fontSize: typography.fontSizes.sm,
-    color: colors.primary,
-    fontWeight: typography.fontWeights.bold,
-  },
-  outcomeItem: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: spacing.sm,
-  },
-  outcomeCheckmark: {
-    marginRight: spacing.xs,
-    marginTop: 2,
-  },
-  outcomeText: {
-    fontSize: typography.fontSizes.sm,
-    color: colors.text.primary,
-    flex: 1,
-    lineHeight: typography.lineHeights.normal,
+  instructorRole: {
+    fontSize: fontSizes.sm,
+    marginTop: spacing.xs,
   },
 })
 

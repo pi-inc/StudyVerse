@@ -1,299 +1,279 @@
 "use client"
 
-import { useState } from "react"
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, SafeAreaView } from "react-native"
-import { Ionicons, Feather } from "@expo/vector-icons"
+import { useRef, useEffect, useState } from "react"
+import { View, Text, ScrollView, Animated, TouchableOpacity } from "react-native"
+import { Ionicons } from "@expo/vector-icons"
 import Header from "../components/shared/Header"
-import FAQItem from "../components/help/FAQItem"
+import StudyStreakCard from "../components/shared/StudyStreakCard"
+import CourseCard from "../components/shared/CourseCard"
+import ActionButton from "../components/home/ActionButton"
+import TodaysPlanCard from "../components/home/TodaysPlanCard"
+import AnimatedListItem from "../components/shared/AnimatedListItem"
+import SkipToContent from "../components/shared/SkipToContent"
+import { useNavigation } from "@react-navigation/native"
+import { useTheme } from "../context/ThemeContext"
+import { useThemedStyles } from "../hooks/useThemedStyles"
+import { navigateToCourse, navigateToAITutor } from "../utils/navigation"
+import { getContinueLearningCourses } from "../services/courseData"
 
-const HelpScreen = () => {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [activeTab, setActiveTab] = useState("faq")
+export default function HomeScreen() {
+  const navigation = useNavigation()
+  const scrollViewRef = useRef(null)
+  const { theme } = useTheme()
+  const streakData = {
+    days: 7,
+    label: "7 day streak",
+    progress: 0.7,
+  }
 
-  const faqCategories = [
-    {
-      title: "General",
-      items: [
-        {
-          question: "What is StudyVerse?",
-          answer:
-            "StudyVerse is an AI-powered learning platform designed to help students master complex subjects through personalized learning paths, interactive study tools, and spaced repetition techniques.",
-        },
-        {
-          question: "How do I get started?",
-          answer:
-            "After signing up, you can browse available courses, take a placement test to determine your knowledge level, and start learning. The AI will create a personalized study plan based on your goals and current knowledge.",
-        },
-        {
-          question: "Is there a free trial?",
-          answer:
-            "Yes, StudyVerse offers a 14-day free trial with access to all features. After the trial period, you can choose from our various subscription plans.",
-        },
-      ],
+  const fadeAnim = useRef(new Animated.Value(0)).current
+  const translateYAnim = useRef(new Animated.Value(50)).current
+  const [showToast, setShowToast] = useState(false)
+  const [toastMessage, setToastMessage] = useState("")
+
+  // Get course data
+  const [continueLearningCourses, setContinueLearningCourses] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Use themed styles
+  const styles = useThemedStyles((theme) => ({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background.primary,
     },
-    {
-      title: "Courses",
-      items: [
-        {
-          question: "What types of courses are available?",
-          answer:
-            "StudyVerse offers courses in Computer Science, Mathematics, Data Science, Web Development, and more. New courses are added regularly based on user demand.",
-        },
-        {
-          question: "How do I track my course progress?",
-          answer:
-            "Your progress is automatically tracked in each course. You can view detailed statistics, including completion percentage, time spent, and mastery level in your profile dashboard.",
-        },
-      ],
+    scrollView: {
+      flex: 1,
+      paddingHorizontal: theme.spacing.md,
     },
-    {
-      title: "AI Tutor",
-      items: [
-        {
-          question: "What can the AI Tutor help me with?",
-          answer:
-            "The AI Tutor can answer questions, explain concepts, provide practice problems, give feedback on your solutions, and adapt to your learning style and pace.",
-        },
-        {
-          question: "How does the AI Tutor personalize my learning?",
-          answer:
-            "The AI Tutor analyzes your performance, identifies knowledge gaps, and adjusts the difficulty and type of content to match your learning needs. It also remembers your previous interactions to provide contextually relevant support.",
-        },
-      ],
+    scrollViewContent: {
+      paddingBottom: 100, // Add padding to the bottom
     },
-    {
-      title: "Revision Tools",
-      items: [
-        {
-          question: "What revision tools are available?",
-          answer:
-            "StudyVerse offers flashcards, quizzes, concept maps, and summary notes. These tools are automatically generated from course content and can be customized to focus on areas you need to review.",
-        },
-        {
-          question: "How does spaced repetition work?",
-          answer:
-            "Spaced repetition schedules reviews at optimal intervals to maximize long-term retention. StudyVerse tracks your performance on each concept and automatically schedules reviews when you're likely to start forgetting.",
-        },
-      ],
+    welcomeSection: {
+      marginTop: 20,
+      marginBottom: 20,
     },
-  ]
+    welcomeText: {
+      fontSize: 24,
+      fontWeight: "bold",
+      color: theme.colors.primaryLight,
+      marginBottom: 10,
+    },
+    purpleDivider: {
+      height: 4,
+      backgroundColor: theme.colors.primary,
+      borderRadius: 2,
+    },
+    section: {
+      marginBottom: 20,
+    },
+    sectionHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: 16,
+    },
+    sectionTitle: {
+      fontSize: 20,
+      fontWeight: "bold",
+      color: theme.colors.text.primary,
+      marginLeft: 8,
+    },
+    toastContainer: {
+      position: "absolute",
+      bottom: 150,
+      left: 20,
+      right: 20,
+      backgroundColor: "rgba(26, 26, 46, 0.9)",
+      borderRadius: 8,
+      padding: 16,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5,
+    },
+    toastText: {
+      color: theme.colors.text.primary,
+      fontSize: 16,
+      flex: 1,
+    },
+    toastCloseButton: {
+      padding: 4,
+    },
+    bottomPadding: {
+      height: 100,
+    },
+    emptyState: {
+      backgroundColor: theme.colors.background.card,
+      borderRadius: 12,
+      padding: 16,
+      alignItems: "center",
+      justifyContent: "center",
+      marginBottom: 12,
+      height: 100,
+    },
+    emptyStateText: {
+      color: theme.colors.text.tertiary,
+      fontSize: 16,
+    },
+    loadingState: {
+      backgroundColor: theme.colors.background.card,
+      borderRadius: 12,
+      padding: 16,
+      alignItems: "center",
+      justifyContent: "center",
+      marginBottom: 12,
+      height: 100,
+    },
+    loadingText: {
+      color: theme.colors.text.tertiary,
+      fontSize: 16,
+    },
+  }))
+
+  useEffect(() => {
+    try {
+      const courses = getContinueLearningCourses()
+      console.log("HomeScreen got courses:", courses)
+      setContinueLearningCourses(courses || [])
+    } catch (error) {
+      console.error("Error getting courses:", error)
+      setContinueLearningCourses([])
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateYAnim, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+    ]).start()
+  }, [])
+
+  const showToastMessage = (message) => {
+    setToastMessage(message)
+    setShowToast(true)
+    setTimeout(() => {
+      setShowToast(false)
+    }, 3000)
+  }
+
+  const handleAITutorPress = () => {
+    navigateToAITutor(navigation)
+    showToastMessage("Opening AI Tutor...")
+  }
+
+  const skipToContent = () => {
+    if (scrollViewRef.current) {
+      scrollViewRef.current.scrollTo({ y: 150, animated: true })
+    }
+  }
+
+  const handleCoursePress = (course) => {
+    navigateToCourse(navigation, course.id)
+  }
+
+  const headerAnimStyle = {
+    opacity: fadeAnim,
+    transform: [{ translateY: translateYAnim }],
+  }
+
+  console.log("HomeScreen rendering with courses:", continueLearningCourses)
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Header title="Help Center" showBack={true} />
-      <ScrollView style={styles.scrollView}>
-        <Text style={styles.pageTitle}>Help Center</Text>
-        <View style={styles.gradientDivider} />
+    <View style={styles.container}>
+      <SkipToContent onPress={skipToContent} />
+      <Header />
+      <ScrollView
+        ref={scrollViewRef}
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollViewContent}
+        contentInsetAdjustmentBehavior="automatic"
+      >
+        <Animated.View style={[styles.welcomeSection, headerAnimStyle]}>
+          <Text style={styles.welcomeText}>Welcome back!</Text>
+          <View style={styles.purpleDivider} />
+        </Animated.View>
 
-        <View style={styles.searchSection}>
-          <Text style={styles.searchTitle}>How can we help you?</Text>
-          <Text style={styles.searchSubtitle}>Search our help center for answers to common questions</Text>
-
-          <View style={styles.searchContainer}>
-            <Feather name="search" size={20} color="#6b7280" style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search for help..."
-              placeholderTextColor="#6b7280"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-            <TouchableOpacity style={styles.searchButton}>
-              <Text style={styles.searchButtonText}>Search</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={styles.tabsContainer}>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === "faq" && styles.activeTab]}
-            onPress={() => setActiveTab("faq")}
-          >
-            <Ionicons name="help-circle-outline" size={20} color={activeTab === "faq" ? "#fff" : "#9ca3af"} />
-            <Text style={[styles.tabText, activeTab === "faq" && styles.activeTabText]}>FAQ</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.tab, activeTab === "resources" && styles.activeTab]}
-            onPress={() => setActiveTab("resources")}
-          >
-            <Ionicons name="document-text-outline" size={20} color={activeTab === "resources" ? "#fff" : "#9ca3af"} />
-            <Text style={[styles.tabText, activeTab === "resources" && styles.activeTabText]}>Resources</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.tab, activeTab === "contact" && styles.activeTab]}
-            onPress={() => setActiveTab("contact")}
-          >
-            <Ionicons name="mail-outline" size={20} color={activeTab === "contact" ? "#fff" : "#9ca3af"} />
-            <Text style={[styles.tabText, activeTab === "contact" && styles.activeTabText]}>Contact Us</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.faqSection}>
-          <Text style={styles.sectionTitle}>Frequently Asked Questions</Text>
-          <Text style={styles.sectionSubtitle}>Find answers to common questions about StudyVerse</Text>
-
-          {faqCategories.map((category, index) => (
-            <View key={index} style={styles.categorySection}>
-              <Text style={styles.categoryTitle}>{category.title}</Text>
-              {category.items.map((item, itemIndex) => (
-                <FAQItem key={itemIndex} question={item.question} answer={item.answer} />
-              ))}
+        <View style={styles.section}>
+          <AnimatedListItem index={0}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="book-outline" size={24} color={theme.colors.text.primary} />
+              <Text style={styles.sectionTitle}>Continue Learning</Text>
             </View>
-          ))}
+          </AnimatedListItem>
+
+          {isLoading ? (
+            <AnimatedListItem index={1}>
+              <View style={styles.loadingState}>
+                <Text style={styles.loadingText}>Loading courses...</Text>
+              </View>
+            </AnimatedListItem>
+          ) : continueLearningCourses && continueLearningCourses.length > 0 ? (
+            continueLearningCourses.map((course, index) => (
+              <AnimatedListItem key={course.id} index={index + 1}>
+                <CourseCard course={course} variant="compact" onPress={handleCoursePress} />
+              </AnimatedListItem>
+            ))
+          ) : (
+            <AnimatedListItem index={1}>
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyStateText}>No courses in progress</Text>
+              </View>
+            </AnimatedListItem>
+          )}
+
+          <AnimatedListItem index={3}>
+            <ActionButton
+              icon="book-outline"
+              text="View All Courses"
+              backgroundColor={theme.colors.primary}
+              navigateTo="Learn"
+            />
+          </AnimatedListItem>
+
+          <AnimatedListItem index={4}>
+            <ActionButton
+              icon="bulb-outline"
+              text="Ask AI Tutor"
+              backgroundColor={theme.colors.info}
+              navigateTo="AITutor"
+            />
+          </AnimatedListItem>
         </View>
 
-        <View style={styles.contactSection}>
-          <Text style={styles.contactText}>Can't find what you're looking for?</Text>
-          <TouchableOpacity style={styles.contactButton}>
-            <Text style={styles.contactButtonText}>Contact Support</Text>
-            <Ionicons name="arrow-forward" size={16} color="#fff" />
+        <AnimatedListItem index={5}>
+          <StudyStreakCard streak={streakData} showAchievements={true} />
+        </AnimatedListItem>
+
+        <AnimatedListItem index={6}>
+          <TodaysPlanCard navigateTo="Plan" />
+        </AnimatedListItem>
+
+        <View style={styles.bottomPadding} />
+      </ScrollView>
+
+      {/* Toast Notification */}
+      {showToast && (
+        <View style={styles.toastContainer}>
+          <Text style={styles.toastText}>{toastMessage}</Text>
+          <TouchableOpacity style={styles.toastCloseButton} onPress={() => setShowToast(false)}>
+            <Ionicons name="close" size={20} color="#fff" />
           </TouchableOpacity>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      )}
+    </View>
   )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#0a0a1a",
-  },
-  scrollView: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  pageTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#a78bfa",
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  gradientDivider: {
-    height: 4,
-    backgroundColor: "#7c3aed",
-    borderRadius: 2,
-    marginBottom: 24,
-  },
-  searchSection: {
-    marginBottom: 24,
-  },
-  searchTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#fff",
-    marginBottom: 4,
-  },
-  searchSubtitle: {
-    fontSize: 14,
-    color: "#9ca3af",
-    marginBottom: 16,
-  },
-  searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#1a1a2e",
-    borderRadius: 12,
-    paddingHorizontal: 12,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    height: 48,
-    color: "#fff",
-    fontSize: 16,
-  },
-  searchButton: {
-    backgroundColor: "#7c3aed",
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginLeft: 8,
-  },
-  searchButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
-  tabsContainer: {
-    flexDirection: "row",
-    backgroundColor: "#1a1a2e",
-    borderRadius: 12,
-    padding: 4,
-    marginBottom: 24,
-  },
-  tab: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  activeTab: {
-    backgroundColor: "#7c3aed",
-  },
-  tabText: {
-    color: "#9ca3af",
-    marginLeft: 6,
-    fontWeight: "bold",
-  },
-  activeTabText: {
-    color: "#fff",
-  },
-  faqSection: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#fff",
-    marginBottom: 4,
-  },
-  sectionSubtitle: {
-    fontSize: 14,
-    color: "#9ca3af",
-    marginBottom: 16,
-  },
-  categorySection: {
-    marginBottom: 16,
-  },
-  categoryTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#fff",
-    marginBottom: 12,
-  },
-  contactSection: {
-    alignItems: "center",
-    marginBottom: 40,
-    paddingVertical: 16,
-    borderTopWidth: 1,
-    borderTopColor: "#1f2937",
-  },
-  contactText: {
-    fontSize: 16,
-    color: "#9ca3af",
-    marginBottom: 12,
-  },
-  contactButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#7c3aed",
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  contactButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    marginRight: 8,
-  },
-})
-
-export default HelpScreen
 

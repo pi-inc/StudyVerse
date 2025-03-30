@@ -1,87 +1,68 @@
 "use client"
 
-import { createContext, useState, useContext, useEffect } from "react"
+import { createContext, useContext, useState, useEffect } from "react"
 import { useColorScheme } from "react-native"
-import AsyncStorage from "@react-native-async-storage/async-storage"
-import { themes } from "../styles/theme"
+import { lightTheme, darkTheme } from "../styles/theme"
 
-// Create the theme context
-const ThemeContext = createContext({
-  theme: themes.dark,
-  isDark: true,
-  toggleTheme: () => {},
-  setTheme: (theme) => {},
-})
+// Create the context
+const ThemeContext = createContext()
 
-// Theme storage key
-const THEME_STORAGE_KEY = "@studyverse_theme"
+// Custom hook to use the theme context
+export const useTheme = () => {
+  const context = useContext(ThemeContext)
+  if (!context) {
+    throw new Error("useTheme must be used within a ThemeProvider")
+  }
+  return context
+}
 
 // Theme provider component
 export const ThemeProvider = ({ children }) => {
   // Get device color scheme
   const deviceTheme = useColorScheme()
+  const [themeMode, setThemeMode] = useState("system") // 'light', 'dark', or 'system'
 
-  // State to track the current theme
-  const [themeType, setThemeType] = useState("dark")
-
-  // Load saved theme on mount
-  useEffect(() => {
-    const loadTheme = async () => {
-      try {
-        const savedTheme = await AsyncStorage.getItem(THEME_STORAGE_KEY)
-
-        if (savedTheme) {
-          // Use saved theme if available
-          setThemeType(savedTheme)
-        } else if (deviceTheme) {
-          // Otherwise use device theme if available
-          setThemeType(deviceTheme)
-        }
-      } catch (error) {
-        console.error("Failed to load theme:", error)
-      }
+  // Determine the actual theme based on mode and device setting
+  const getActiveTheme = () => {
+    if (themeMode === "system") {
+      return deviceTheme === "dark" ? darkTheme : lightTheme
     }
+    return themeMode === "dark" ? darkTheme : lightTheme
+  }
 
-    loadTheme()
-  }, [deviceTheme])
+  const [theme, setTheme] = useState(getActiveTheme())
 
-  // Save theme when it changes
+  // Update theme when device theme changes or user preference changes
   useEffect(() => {
-    const saveTheme = async () => {
-      try {
-        await AsyncStorage.setItem(THEME_STORAGE_KEY, themeType)
-      } catch (error) {
-        console.error("Failed to save theme:", error)
-      }
-    }
-
-    saveTheme()
-  }, [themeType])
+    setTheme(getActiveTheme())
+  }, [deviceTheme, themeMode])
 
   // Toggle between light and dark themes
   const toggleTheme = () => {
-    setThemeType((prevTheme) => (prevTheme === "light" ? "dark" : "light"))
+    setThemeMode((prev) => {
+      if (prev === "system") return "light"
+      if (prev === "light") return "dark"
+      return "system"
+    })
   }
 
   // Set a specific theme
-  const setTheme = (theme) => {
-    setThemeType(theme)
+  const setMode = (mode) => {
+    if (["light", "dark", "system"].includes(mode)) {
+      setThemeMode(mode)
+    }
   }
 
-  // Get the current theme object
-  const theme = themes[themeType] || themes.dark
-
-  // Context value
-  const contextValue = {
+  const value = {
     theme,
-    isDark: themeType === "dark",
+    themeMode,
     toggleTheme,
-    setTheme,
+    setMode,
+    isDark: theme === darkTheme,
   }
 
-  return <ThemeContext.Provider value={contextValue}>{children}</ThemeContext.Provider>
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
 }
 
-// Custom hook to use the theme
-export const useTheme = () => useContext(ThemeContext)
+export default ThemeContext
 
