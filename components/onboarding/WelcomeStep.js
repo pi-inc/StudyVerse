@@ -76,7 +76,7 @@ const WelcomeStep = ({ width, onNext, setSkipAuth }) => {
           { backgroundColor: theme.colors.background.primary, borderTopColor: theme.colors.border.light },
         ]}
       >
-        <Text style={[styles.stepIndicator, { color: theme.colors.text.tertiary }]}>1 of 2</Text>
+        <Text style={[styles.stepIndicator, { color: theme.colors.text.tertiary }]}>1 of 8</Text>
         <View style={styles.buttonContainer}>
           <TouchableOpacity
             style={[styles.skipButton, { color: theme.colors.text.tertiary }]}

@@ -64,7 +64,7 @@ const KeyFeaturesStep = ({ width, onNext, onBack, setSkipAuth }) => {
       </ScrollView>
 
       <View style={styles.footer}>
-        <Text style={styles.stepIndicator}>2 of 2</Text>
+        <Text style={styles.stepIndicator}>2 of 8</Text>
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.backButton} onPress={onBack}>
             <Ionicons name="arrow-back" size={16} color="#6b7280" />
