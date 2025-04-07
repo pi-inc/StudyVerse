@@ -11,7 +11,7 @@ import SectionHeader from "../components/shared/SectionHeader"
 import AnimatedListItem from "../components/shared/AnimatedListItem"
 import AITutorView from "../components/learn/AITutorView"
 import { spacing } from "../styles/theme"
-import { navigateToCourse, navigateToAITutor } from "../utils/navigation"
+import { navigateToAITutor } from "../utils/navigation"
 import { getContinueLearningCourses, getRecommendedCourses, getExploreCourses } from "../services/courseData"
 import { useTheme } from "../context/ThemeContext"
 
@@ -75,7 +75,9 @@ const LearnScreen = ({ route, navigation }) => {
   }
 
   const handleCoursePress = (course) => {
-    navigateToCourse(navigation, course.id)
+    // Pass the complete course object instead of just the ID
+    console.log("LearnScreen - Navigating to course with full course object:", course)
+    navigation.navigate("CourseDetail", { course: course })
   }
 
   const handleRecommendationPress = (item) => {
@@ -83,7 +85,30 @@ const LearnScreen = ({ route, navigation }) => {
     if (item.type === "AI Tutor") {
       navigateToAITutor(navigation)
     } else if (item.courseId) {
-      navigateToCourse(navigation, item.courseId)
+      // For recommendations, we need to find the full course object
+      // based on the courseId in the recommendation
+      const courseId = item.courseId
+
+      // Look for the course in all our course lists
+      let courseToNavigate = null
+
+      // Check in continue learning courses
+      courseToNavigate = continueLearningCourses.find((c) => c.id === courseId)
+
+      // If not found, check in explore courses
+      if (!courseToNavigate) {
+        courseToNavigate = exploreCourses.find((c) => c.id === courseId)
+      }
+
+      console.log("LearnScreen - Navigating to recommended course:", courseToNavigate || { id: courseId })
+
+      if (courseToNavigate) {
+        // If we found the full course object, pass it
+        navigation.navigate("CourseDetail", { course: courseToNavigate })
+      } else {
+        // Fallback to just passing the ID if we couldn't find the course
+        navigation.navigate("CourseDetail", { courseId: courseId })
+      }
     }
   }
 

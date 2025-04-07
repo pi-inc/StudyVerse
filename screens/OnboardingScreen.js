@@ -20,7 +20,7 @@ const { width, height } = Dimensions.get("window")
 const TOTAL_STEPS = 8 // Updated to 8 steps for the full onboarding process
 
 // Update the component signature to accept setSkipAuth
-const OnboardingScreen = ({ setSkipAuth, isAuthenticated }) => {
+const OnboardingScreen = ({ setSkipAuth, isAuthenticated, setIsAuthenticated }) => {
   const navigation = useNavigation()
   const [currentStep, setCurrentStep] = useState(0)
   const scrollViewRef = useRef(null)
@@ -32,7 +32,7 @@ const OnboardingScreen = ({ setSkipAuth, isAuthenticated }) => {
   // Add state to track if we're showing SignIn or SignUp at step 3
   const [showSignUp, setShowSignUp] = useState(false)
 
-  // User data state
+  // User data state with safe default values
   const [userData, setUserData] = useState({
     name: "",
     email: "",
@@ -46,44 +46,49 @@ const OnboardingScreen = ({ setSkipAuth, isAuthenticated }) => {
     emailVerified: false,
   })
 
-  // Retrieve persisted step on mount
+  // Retrieve persisted step on mount or reset if not authenticated
   useEffect(() => {
-    // Retrieve persisted step on mount, but only if user is authenticated
-    try {
-      if (isAuthenticated) {
-        AsyncStorage.getItem("onboardingStep").then((step) => {
+    const loadPersistedStep = async () => {
+      try {
+        if (isAuthenticated) {
+          const step = await AsyncStorage.getItem("onboardingStep")
           if (step !== null && Number.parseInt(step) > 0) {
-            setCurrentStep(Number.parseInt(step))
+            const parsedStep = Number.parseInt(step)
+            setCurrentStep(parsedStep)
             // Also scroll to the correct step
             if (scrollViewRef.current) {
               setTimeout(() => {
                 scrollViewRef.current.scrollTo({
-                  x: Number.parseInt(step) * width,
+                  x: parsedStep * screenDimensions.width,
                   animated: false,
                 })
               }, 100)
             }
           }
-        })
-      } else {
-        // If not authenticated, reset to the beginning
-        setCurrentStep(0)
-        // Reset scroll position
-        if (scrollViewRef.current) {
-          setTimeout(() => {
-            scrollViewRef.current.scrollTo({
-              x: 0,
-              animated: false,
-            })
-          }, 100)
+        } else {
+          // If not authenticated, reset to the beginning
+          setCurrentStep(0)
+          // Reset scroll position
+          if (scrollViewRef.current) {
+            setTimeout(() => {
+              scrollViewRef.current.scrollTo({
+                x: 0,
+                animated: false,
+              })
+            }, 100)
+          }
+          // Clear the stored step
+          await AsyncStorage.removeItem("onboardingStep")
         }
-        // Clear the stored step
-        AsyncStorage.removeItem("onboardingStep")
+      } catch (error) {
+        console.error("Error handling persisted step:", error)
+        // Fallback to step 0 on error
+        setCurrentStep(0)
       }
-    } catch (error) {
-      console.error("Error retrieving step:", error)
     }
-  }, [isAuthenticated]) // Add isAuthenticated as a dependency
+
+    loadPersistedStep()
+  }, [isAuthenticated, screenDimensions.width])
 
   // Listen for dimension changes
   useEffect(() => {
@@ -223,6 +228,8 @@ const OnboardingScreen = ({ setSkipAuth, isAuthenticated }) => {
               // For now, just show sign up instead of forgot password
               toggleSignInSignUp()
             }}
+            isAuthenticated={isAuthenticated}
+            setIsAuthenticated={setIsAuthenticated}
           />
         ) : (
           <SignUpStep
@@ -232,6 +239,8 @@ const OnboardingScreen = ({ setSkipAuth, isAuthenticated }) => {
             userData={userData}
             updateUserData={updateUserData}
             goToSignIn={toggleSignInSignUp}
+            isAuthenticated={isAuthenticated}
+            setIsAuthenticated={setIsAuthenticated}
           />
         )}
 

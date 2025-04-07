@@ -18,6 +18,7 @@ import { createUserProfile } from "../../services/user"
 
 const { height } = Dimensions.get("window")
 
+// Update the component signature to accept auth state props
 const SignUpStep = ({
   width,
   onNext,
@@ -25,6 +26,8 @@ const SignUpStep = ({
   userData = { name: "", email: "", password: "" },
   updateUserData = () => {},
   goToSignIn,
+  isAuthenticated,
+  setIsAuthenticated,
 }) => {
   const [isLoading, setIsLoading] = useState(false)
   const [authError, setAuthError] = useState(null)
@@ -36,8 +39,9 @@ const SignUpStep = ({
   const [confirmPasswordError, setConfirmPasswordError] = useState("")
   const [isFormValid, setIsFormValid] = useState(false)
   const [confirmPassword, setConfirmPassword] = useState("")
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  // Remove local isAuthenticated state since we're using the prop
 
+  // Ensure safe default values for userData
   const [localUserData, setLocalUserData] = useState({
     name: userData?.name || "",
     email: userData?.email || "",
@@ -145,19 +149,24 @@ const SignUpStep = ({
       setIsLoading(true)
       setAuthError(null)
 
+      // Ensure values are strings
+      const email = String(localUserData.email || "")
+      const password = String(localUserData.password || "")
+      const name = String(localUserData.name || "")
+
       // Create user with Firebase Authentication
-      const userCredential = await createUserWithEmailAndPassword(auth, localUserData.email, localUserData.password)
-      console.log("Sign-up attempted, waiting for auth state...")
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+      console.log("Sign-up successful, user:", userCredential.user.uid)
 
       // Update user profile with display name
       await updateProfile(userCredential.user, {
-        displayName: localUserData.name,
+        displayName: name,
       })
 
       // Create user profile in Firestore
       await createUserProfile({
-        displayName: localUserData.name,
-        email: localUserData.email,
+        displayName: name,
+        email: email,
       })
 
       // Update user data with Firebase user info
@@ -169,12 +178,14 @@ const SignUpStep = ({
         })
       }
 
-      // Set authenticated state
+      // Set authenticated state using the prop
       setIsAuthenticated(true)
 
-      // Important: Call onNext directly to advance to the next step
-      onNext()
+      // REMOVE THIS LINE - don't call onNext() directly
+      // onNext()
     } catch (error) {
+      console.error("Sign up error:", error)
+
       // Handle specific Firebase auth errors
       let errorMessage = "Sign up failed. Please try again."
 
@@ -203,6 +214,7 @@ const SignUpStep = ({
     }
   }
 
+  // Update the handleGoogleSignUp function to use the prop's setIsAuthenticated
   const handleGoogleSignUp = async () => {
     try {
       setIsLoading(true)
@@ -240,7 +252,7 @@ const SignUpStep = ({
     }
   }
 
-  // Only allow proceeding if authenticated
+  // Update the handleNext function to use the prop's isAuthenticated
   const handleNext = () => {
     if (isAuthenticated) {
       onNext()
@@ -386,13 +398,14 @@ const SignUpStep = ({
             <Text style={styles.backButtonText}>Back</Text>
           </TouchableOpacity>
 
+          {/* Update the Next button to use the prop's isAuthenticated */}
           <TouchableOpacity
             style={[
               styles.nextButton,
               { backgroundColor: "#ec4899" },
               (!isAuthenticated || isLoading) && styles.disabledButton,
             ]}
-            onPress={handleNext}
+            onPress={onNext}
             disabled={!isAuthenticated || isLoading}
           >
             <Text style={styles.nextButtonText}>Next</Text>

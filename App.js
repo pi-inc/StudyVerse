@@ -17,7 +17,6 @@ import HomeScreen from "./screens/HomeScreen"
 import LearnScreen from "./screens/LearnScreen"
 import PlanScreen from "./screens/PlanScreen"
 import CommunityScreen from "./screens/CommunityScreen"
-import ProfileScreen from "./screens/ProfileScreen"
 import CourseDetailScreen from "./screens/CourseDetailScreen"
 import ModuleDetailScreen from "./screens/ModuleDetailScreen"
 import AITutorScreen from "./screens/AITutorScreen"
@@ -25,6 +24,7 @@ import HelpScreen from "./screens/HelpScreen"
 import SettingsScreen from "./screens/SettingsScreen"
 import ReviewScreen from "./screens/ReviewScreen"
 import OnboardingScreen from "./screens/OnboardingScreen"
+import ReviseScreen from "./screens/ReviseScreen"
 
 // Auth Components - importing from the correct location
 
@@ -70,10 +70,10 @@ function MainTabs() {
             iconName = focused ? "book" : "book-outline"
           } else if (route.name === "Plan") {
             iconName = focused ? "calendar" : "calendar-outline"
+          } else if (route.name === "Revise") {
+            iconName = focused ? "refresh" : "refresh-outline"
           } else if (route.name === "Community") {
             iconName = focused ? "people" : "people-outline"
-          } else if (route.name === "Profile") {
-            iconName = focused ? "person" : "person-outline"
           }
 
           return <Ionicons name={iconName} size={size} color={color} />
@@ -98,8 +98,8 @@ function MainTabs() {
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Learn" component={LearnScreen} />
       <Tab.Screen name="Plan" component={PlanScreen} />
+      <Tab.Screen name="Revise" component={ReviewScreen} />
       <Tab.Screen name="Community" component={CommunityScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   )
 }
@@ -115,37 +115,49 @@ function AppContent() {
   useEffect(() => {
     const auth = getAuth()
     console.log("Starting Firebase auth check...")
+    setIsLoading(true) // Explicitly set loading to true
 
     // Note: In React Native, Firebase automatically uses AsyncStorage for persistence
-    // No need to explicitly set persistence as it defaults to LOCAL in React Native
-    console.log("Firebase persistence is enabled by default in React Native via AsyncStorage")
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      (user) => {
+        try {
+          // Only update authentication state if it's actually different
+          // This prevents unnecessary re-renders and navigation issues
+          const newAuthState = !!user
+          if (isAuthenticated !== newAuthState) {
+            console.log("Auth state changed:", newAuthState)
+            setIsAuthenticated(newAuthState)
+          }
 
-    // Keep isLoading true until auth state is confirmed
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      const newAuthState = !!user
-      setIsAuthenticated(newAuthState)
+          // Enhanced logging
+          console.log("Auth state resolved on reload:", user ? user.uid : "none")
 
-      // Enhanced logging to confirm persistence worked
-      console.log("Firebase auth state initialized:", newAuthState)
-      console.log("Auth persistence check complete, user:", user ? user.uid : "none")
-
-      if (user) {
-        console.log("User is signed in:")
-        console.log("- Email:", user.email)
-        console.log("- UID:", user.uid)
-        console.log("- Display Name:", user.displayName)
-        console.log("- Email Verified:", user.emailVerified)
-      } else {
-        console.log("User is signed out")
-      }
-
-      // Only set isLoading to false after auth state is confirmed
-      setIsLoading(false)
-    })
+          if (user) {
+            console.log("Auth persistence verified:")
+            console.log("- Email:", user.email || "not available")
+            console.log("- UID:", user.uid)
+            console.log("- Display Name:", user.displayName || "not set")
+            console.log("- Email Verified:", user.emailVerified)
+          } else {
+            console.log("User is signed out")
+          }
+        } catch (error) {
+          console.error("Error processing auth state:", error)
+        } finally {
+          // Always set isLoading to false after auth state is processed
+          setIsLoading(false)
+        }
+      },
+      (error) => {
+        console.error("Auth state observer error:", error)
+        setIsLoading(false) // Ensure loading ends even on error
+      },
+    )
 
     // Clean up the listener on unmount
     return () => unsubscribe()
-  }, [])
+  }, [isAuthenticated])
 
   // Log authentication state changes
   useEffect(() => {
@@ -176,12 +188,16 @@ function AppContent() {
               // Show onboarding regardless of authentication status for now
               // This preserves the existing logic while adding the authentication check
               <>
-                <Stack.Screen
-                  name="Onboarding"
-                  component={(props) => (
-                    <OnboardingScreen {...props} setSkipAuth={setSkipAuth} isAuthenticated={isAuthenticated} />
+                <Stack.Screen name="Onboarding">
+                  {(props) => (
+                    <OnboardingScreen
+                      {...props}
+                      setSkipAuth={setSkipAuth}
+                      isAuthenticated={isAuthenticated}
+                      setIsAuthenticated={setIsAuthenticated}
+                    />
                   )}
-                />
+                </Stack.Screen>
               </>
             ) : (
               // Main app screens - only show when onboarding is complete or skipped
@@ -193,6 +209,7 @@ function AppContent() {
                 <Stack.Screen name="Help" component={HelpScreen} />
                 <Stack.Screen name="Settings" component={SettingsScreen} />
                 <Stack.Screen name="Review" component={ReviewScreen} />
+                <Stack.Screen name="Revise" component={ReviseScreen} />
               </>
             )}
           </Stack.Navigator>

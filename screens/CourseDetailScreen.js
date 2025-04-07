@@ -18,6 +18,24 @@ const CourseDetailScreen = () => {
   const { theme } = useTheme()
   const [lessons, setLessons] = useState([])
 
+  // Add detailed logging of route params and course data
+  useEffect(() => {
+    console.log("CourseDetailScreen - route.params:", route.params)
+    console.log("CourseDetailScreen - course data:", course)
+
+    // Log individual course properties if course exists
+    if (course) {
+      console.log("CourseDetailScreen - course.id:", course.id)
+      console.log("CourseDetailScreen - course.title:", course.title)
+      console.log("CourseDetailScreen - course.category:", course.category)
+      console.log("CourseDetailScreen - course.level:", course.level)
+      console.log("CourseDetailScreen - course.progress:", course.progress)
+    } else {
+      console.log("CourseDetailScreen - WARNING: course is undefined or null")
+      console.log("CourseDetailScreen - All route.params keys:", Object.keys(route.params || {}))
+    }
+  }, [route.params, course])
+
   useEffect(() => {
     // Fetch lessons for this course
     // This would normally come from an API

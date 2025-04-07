@@ -19,44 +19,169 @@ import Header from "../components/shared/Header"
 import { geminiAI } from "../services/ai"
 import { useTheme } from "../context/ThemeContext"
 
-// Helper function to parse text with formatting (**bold** and *italic*)
-const formatMessageText = (text) => {
-  if (!text) return []
+// Text formatting function for AI Tutor messages
+const formatAITutorText = (text) => {
+  if (!text) return [{ text: "", style: "normal" }]
 
-  // First, split the text by the bold pattern (**text**)
-  const boldSegments = text.split(/(\*\*.*?\*\*)/g)
+  // Initialize result array
+  const segments = []
 
-  // Process each segment for bold and italic formatting
-  return boldSegments.flatMap((segment, index) => {
-    // Check if this segment is bold (surrounded by **)
-    if (segment.startsWith("**") && segment.endsWith("**")) {
-      // Remove the ** markers and return with bold styling
-      const boldText = segment.substring(2, segment.length - 2)
-      return (
-        <Text key={`bold-${index}`} style={{ fontWeight: "bold" }}>
-          {boldText}
-        </Text>
-      )
-    } else {
-      // If not bold, check for italic formatting (*text*)
-      const italicSegments = segment.split(/(\*[^*]+\*)/g)
+  // Find all potential formatting markers
+  const markers = []
 
-      return italicSegments.map((italicSegment, italicIndex) => {
-        // Check if this segment is italic (surrounded by single *)
-        if (italicSegment.startsWith("*") && italicSegment.endsWith("*") && italicSegment.length > 2) {
-          // Remove the * markers and return with italic styling
-          const italicText = italicSegment.substring(1, italicSegment.length - 1)
-          return (
-            <Text key={`italic-${index}-${italicIndex}`} style={{ fontStyle: "italic" }}>
-              {italicText}
-            </Text>
-          )
-        }
-        // Return regular text if not italic
-        return italicSegment ? <Text key={`regular-${index}-${italicIndex}`}>{italicSegment}</Text> : null
+  // Bold patterns (highest priority)
+  const boldPatterns = [
+    { regex: /\*([^*]+)\*/g, markerLength: 1 }, // *bold*
+    { regex: /_([^_]+)_/g, markerLength: 1 }, // _bold_
+    { regex: /\*\*([^*]+)\*\*/g, markerLength: 2 }, // **bold**
+    { regex: /__([^_]+)__/g, markerLength: 2 }, // __bold__
+  ]
+
+  // Process bold patterns
+  boldPatterns.forEach((pattern) => {
+    let match
+    while ((match = pattern.regex.exec(text)) !== null) {
+      markers.push({
+        type: "bold",
+        start: match.index,
+        end: match.index + match[0].length - pattern.markerLength,
+        innerStart: match.index + pattern.markerLength,
+        innerEnd: match.index + match[0].length - pattern.markerLength,
+        markerLength: pattern.markerLength,
+        text: match[1],
       })
     }
   })
+
+  // Italic patterns (medium priority)
+  const italicPatterns = [
+    { regex: /\*([^*]+)\*/g, markerLength: 1 }, // *italic*
+    { regex: /_([^_]+)_/g, markerLength: 1 }, // _italic_
+  ]
+
+  // Process italic patterns
+  italicPatterns.forEach((pattern) => {
+    let match
+    while ((match = pattern.regex.exec(text)) !== null) {
+      // Check if this segment is already marked as bold
+      const alreadyBold = markers.some(
+        (m) =>
+          m.type === "bold" &&
+          m.innerStart <= match.index &&
+          m.innerEnd >= match.index + match[0].length - pattern.markerLength,
+      )
+
+      if (!alreadyBold) {
+        markers.push({
+          type: "italic",
+          start: match.index,
+          end: match.index + match[0].length - pattern.markerLength,
+          innerStart: match.index + pattern.markerLength,
+          innerEnd: match.index + match[0].length - pattern.markerLength,
+          markerLength: pattern.markerLength,
+          text: match[1],
+        })
+      }
+    }
+  })
+
+  // Underline patterns (lowest priority)
+  const underlinePatterns = [
+    { regex: /^_([^:]+):/g, markerLength: 1 }, // _Underline:
+    { regex: /^_([^_]+)\s/g, markerLength: 1 }, // _Underline followed by space
+  ]
+
+  // Process underline patterns
+  underlinePatterns.forEach((pattern) => {
+    let match
+    while ((match = pattern.regex.exec(text)) !== null) {
+      // Check if this segment is already marked as bold or italic
+      const alreadyFormatted = markers.some(
+        (m) =>
+          (m.type === "bold" || m.type === "italic") &&
+          m.innerStart <= match.index &&
+          m.innerEnd >= match.index + match[0].length - pattern.markerLength,
+      )
+
+      if (!alreadyFormatted) {
+        markers.push({
+          type: "underline",
+          start: match.index,
+          end: match.index + match[0].length - pattern.markerLength,
+          innerStart: match.index + pattern.markerLength,
+          innerEnd: match.index + match[0].length - pattern.markerLength,
+          markerLength: pattern.markerLength,
+          text: match[1],
+        })
+      }
+    }
+  })
+
+  // Sort markers by position
+  markers.sort((a, b) => a.start - b.start)
+
+  // Resolve overlapping markers
+  const resolvedMarkers = []
+  for (let i = 0; i < markers.length; i++) {
+    let overlapping = false
+    for (let j = 0; j < resolvedMarkers.length; j++) {
+      // Check if current marker overlaps with any resolved marker
+      if (
+        (markers[i].start >= resolvedMarkers[j].start && markers[i].start <= resolvedMarkers[j].end) ||
+        (markers[i].end >= resolvedMarkers[j].start && markers[i].end <= resolvedMarkers[j].end)
+      ) {
+        overlapping = true
+        // If current marker is bold and overlapping marker is not, replace it
+        if (markers[i].type === "bold" && resolvedMarkers[j].type !== "bold") {
+          resolvedMarkers[j] = markers[i]
+        }
+        break
+      }
+    }
+
+    if (!overlapping) {
+      resolvedMarkers.push(markers[i])
+    }
+  }
+
+  // Generate segments
+  let currentPosition = 0
+
+  // Sort resolved markers by position again to ensure correct order
+  resolvedMarkers.sort((a, b) => a.start - b.start)
+
+  for (const marker of resolvedMarkers) {
+    // Add normal text before marker
+    if (marker.start > currentPosition) {
+      segments.push({
+        text: text.substring(currentPosition, marker.start),
+        style: "normal",
+      })
+    }
+
+    // Add formatted text
+    segments.push({
+      text: marker.text,
+      style: marker.type,
+    })
+
+    currentPosition = marker.end + marker.markerLength
+  }
+
+  // Add any remaining normal text
+  if (currentPosition < text.length) {
+    segments.push({
+      text: text.substring(currentPosition),
+      style: "normal",
+    })
+  }
+
+  // If no segments were created (no formatting found), return the whole text as normal
+  if (segments.length === 0) {
+    segments.push({ text, style: "normal" })
+  }
+
+  return segments
 }
 
 const AITutorScreen = ({ route }) => {
@@ -222,9 +347,26 @@ const AITutorScreen = ({ route }) => {
                   : [styles.aiMessageBubble, { backgroundColor: theme.colors.background.secondary }],
               ]}
             >
-              <Text style={[styles.messageText, { color: theme.colors.text.primary }]}>
-                {msg.sender === "ai" ? formatMessageText(msg.text) : msg.text}
-              </Text>
+              {msg.sender === "ai" ? (
+                <View>
+                  {formatAITutorText(msg.text).map((segment, index) => (
+                    <Text
+                      key={index}
+                      style={[
+                        styles.messageText,
+                        segment.style === "bold" && styles.boldText,
+                        segment.style === "italic" && styles.italicText,
+                        segment.style === "underline" && styles.underlineText,
+                        { color: theme.colors.text.primary },
+                      ]}
+                    >
+                      {segment.text}
+                    </Text>
+                  ))}
+                </View>
+              ) : (
+                <Text style={[styles.messageText, { color: theme.colors.text.primary }]}>{msg.text}</Text>
+              )}
             </View>
           </View>
         ))}
@@ -386,6 +528,15 @@ const styles = StyleSheet.create({
   messageText: {
     fontSize: 16,
     lineHeight: 22,
+  },
+  boldText: {
+    fontWeight: "bold",
+  },
+  italicText: {
+    fontStyle: "italic",
+  },
+  underlineText: {
+    textDecorationLine: "underline",
   },
   loadingContainer: {
     flexDirection: "row",

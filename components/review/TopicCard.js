@@ -3,9 +3,11 @@
 import { useRef } from "react"
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
+import { useTheme } from "../../context/ThemeContext"
 
 const TopicCard = ({ topic }) => {
   const scaleAnim = useRef(new Animated.Value(1)).current
+  const { theme } = useTheme()
 
   const handlePressIn = () => {
     Animated.timing(scaleAnim, {
@@ -31,13 +33,19 @@ const TopicCard = ({ topic }) => {
       }}
     >
       <TouchableOpacity
-        style={styles.container}
+        style={[
+          styles.container,
+          {
+            backgroundColor: theme.colors.background.secondary,
+            borderColor: theme.colors.border.light,
+          },
+        ]}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         activeOpacity={0.9}
       >
         <View style={styles.contentContainer}>
-          <Text style={styles.title}>{topic.title}</Text>
+          <Text style={[styles.title, { color: theme.colors.text.primary }]}>{topic.title}</Text>
           <View style={styles.proficiencyContainer}>
             <Text style={[styles.proficiencyText, { color: topic.proficiencyColor }]}>{topic.proficiencyLevel}</Text>
             <View style={[styles.proficiencyBar, { backgroundColor: topic.proficiencyColor }]} />
@@ -45,11 +53,11 @@ const TopicCard = ({ topic }) => {
         </View>
 
         <View style={styles.statusContainer}>
-          <View style={styles.dueNowBadge}>
-            <Ionicons name="time" size={16} color="#f59e0b" />
-            <Text style={styles.dueNowText}>{topic.status}</Text>
+          <View style={[styles.dueNowBadge, { backgroundColor: "rgba(245, 158, 11, 0.2)" }]}>
+            <Ionicons name="time" size={16} color={theme.colors.warning} />
+            <Text style={[styles.dueNowText, { color: theme.colors.warning }]}>{topic.status}</Text>
           </View>
-          <Text style={styles.lastReviewedText}>{topic.lastReviewed}</Text>
+          <Text style={[styles.lastReviewedText, { color: theme.colors.text.tertiary }]}>{topic.lastReviewed}</Text>
         </View>
       </TouchableOpacity>
     </Animated.View>
@@ -61,12 +69,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#1a1a2e",
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: "#2d2d44",
   },
   contentContainer: {
     flex: 1,
@@ -75,7 +81,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#fff",
     marginBottom: 8,
   },
   proficiencyContainer: {
@@ -98,7 +103,6 @@ const styles = StyleSheet.create({
   dueNowBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(245, 158, 11, 0.2)",
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -107,12 +111,10 @@ const styles = StyleSheet.create({
   dueNowText: {
     fontSize: 14,
     fontWeight: "bold",
-    color: "#f59e0b",
     marginLeft: 4,
   },
   lastReviewedText: {
     fontSize: 14,
-    color: "#9ca3af",
   },
 })
 

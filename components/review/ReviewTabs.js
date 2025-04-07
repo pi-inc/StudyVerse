@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated, Dimensions } from "react-native"
 import { Ionicons, MaterialIcons, FontAwesome5, Feather } from "@expo/vector-icons"
+import { useTheme } from "../../context/ThemeContext"
 
 const { width } = Dimensions.get("window")
 
@@ -10,6 +11,7 @@ const ReviewTabs = ({ activeTab, onTabChange }) => {
   const scrollViewRef = useRef(null)
   const [showScrollIndicator, setShowScrollIndicator] = useState(true)
   const fadeAnim = useRef(new Animated.Value(1)).current
+  const { theme } = useTheme()
 
   const tabs = [
     {
@@ -78,14 +80,19 @@ const ReviewTabs = ({ activeTab, onTabChange }) => {
     switch (tab.iconType) {
       case "feather":
         return (
-          <Feather name={tab.icon} size={18} color={activeTab === tab.id ? "#fff" : "#6b7280"} style={styles.tabIcon} />
+          <Feather
+            name={tab.icon}
+            size={18}
+            color={activeTab === tab.id ? theme.colors.text.primary : theme.colors.text.tertiary}
+            style={styles.tabIcon}
+          />
         )
       case "fontawesome":
         return (
           <FontAwesome5
             name={tab.icon}
             size={18}
-            color={activeTab === tab.id ? "#fff" : "#6b7280"}
+            color={activeTab === tab.id ? theme.colors.text.primary : theme.colors.text.tertiary}
             style={styles.tabIcon}
           />
         )
@@ -94,7 +101,7 @@ const ReviewTabs = ({ activeTab, onTabChange }) => {
           <MaterialIcons
             name={tab.icon}
             size={18}
-            color={activeTab === tab.id ? "#fff" : "#6b7280"}
+            color={activeTab === tab.id ? theme.colors.text.primary : theme.colors.text.tertiary}
             style={styles.tabIcon}
           />
         )
@@ -103,7 +110,7 @@ const ReviewTabs = ({ activeTab, onTabChange }) => {
           <Ionicons
             name={tab.icon}
             size={18}
-            color={activeTab === tab.id ? "#fff" : "#6b7280"}
+            color={activeTab === tab.id ? theme.colors.text.primary : theme.colors.text.tertiary}
             style={styles.tabIcon}
           />
         )
@@ -116,25 +123,36 @@ const ReviewTabs = ({ activeTab, onTabChange }) => {
         ref={scrollViewRef}
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.container}
+        contentContainerStyle={[styles.container, { backgroundColor: theme.colors.background.secondary }]}
         onScroll={handleScroll}
         scrollEventThrottle={16}
       >
         {tabs.map((tab) => (
           <TouchableOpacity
             key={tab.id}
-            style={[styles.tab, activeTab === tab.id && styles.activeTab]}
+            style={[
+              styles.tab,
+              activeTab === tab.id && [styles.activeTab, { backgroundColor: theme.colors.background.accent }],
+            ]}
             onPress={() => onTabChange(tab.id)}
           >
             {renderIcon(tab)}
-            <Text style={[styles.tabText, activeTab === tab.id && styles.activeTabText]}>{tab.label}</Text>
+            <Text
+              style={[
+                styles.tabText,
+                { color: theme.colors.text.tertiary },
+                activeTab === tab.id && [styles.activeTabText, { color: theme.colors.text.primary }],
+              ]}
+            >
+              {tab.label}
+            </Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
 
       <Animated.View style={[styles.scrollIndicator, { opacity: fadeAnim }]} pointerEvents="none">
-        <View style={styles.scrollIndicatorGradient} />
-        <Ionicons name="chevron-forward" size={20} color="#a78bfa" />
+        <View style={[styles.scrollIndicatorGradient, { backgroundColor: theme.colors.background.secondary }]} />
+        <Ionicons name="chevron-forward" size={20} color={theme.colors.primary} />
       </Animated.View>
     </View>
   )
@@ -146,7 +164,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   container: {
-    backgroundColor: "#1a1a2e",
     borderRadius: 12,
     padding: 4,
   },
@@ -160,18 +177,18 @@ const styles = StyleSheet.create({
     marginHorizontal: 2,
   },
   activeTab: {
-    backgroundColor: "#2d2d44",
+    // backgroundColor set dynamically
   },
   tabIcon: {
     marginRight: 8,
   },
   tabText: {
     fontSize: 14,
-    color: "#6b7280",
+    // color set dynamically
   },
   activeTabText: {
-    color: "#fff",
     fontWeight: "bold",
+    // color set dynamically
   },
   scrollIndicator: {
     position: "absolute",
@@ -189,7 +206,6 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: 40,
-    backgroundColor: "#1a1a2e",
     borderTopRightRadius: 12,
     borderBottomRightRadius: 12,
     opacity: 0.8,

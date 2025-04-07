@@ -10,10 +10,12 @@ import ReviewTabs from "../components/review/ReviewTabs"
 import FlashcardView from "../components/review/FlashcardView"
 import SectionHeader from "../components/shared/SectionHeader"
 import AnimatedListItem from "../components/shared/AnimatedListItem"
+import { useTheme } from "../context/ThemeContext"
 
 const ReviewScreen = () => {
   const [activeTab, setActiveTab] = useState("flashcards")
   const [currentSubject, setCurrentSubject] = useState("Data Structures")
+  const { theme } = useTheme()
 
   const fadeAnim = useRef(new Animated.Value(0)).current
   const translateYAnim = useRef(new Animated.Value(30)).current
@@ -94,27 +96,33 @@ const ReviewScreen = () => {
       case "quiz":
         return (
           <AnimatedListItem index={4}>
-            <View style={styles.placeholderContainer}>
-              <Feather name="help-circle" size={48} color="#6b7280" />
-              <Text style={styles.placeholderText}>Quiz content coming soon</Text>
+            <View style={[styles.placeholderContainer, { backgroundColor: theme.colors.background.secondary }]}>
+              <Feather name="help-circle" size={48} color={theme.colors.text.tertiary} />
+              <Text style={[styles.placeholderText, { color: theme.colors.text.secondary }]}>
+                Quiz content coming soon
+              </Text>
             </View>
           </AnimatedListItem>
         )
       case "concept-maps":
         return (
           <AnimatedListItem index={4}>
-            <View style={styles.placeholderContainer}>
-              <Feather name="share-2" size={48} color="#6b7280" />
-              <Text style={styles.placeholderText}>Concept Maps coming soon</Text>
+            <View style={[styles.placeholderContainer, { backgroundColor: theme.colors.background.secondary }]}>
+              <Feather name="share-2" size={48} color={theme.colors.text.tertiary} />
+              <Text style={[styles.placeholderText, { color: theme.colors.text.secondary }]}>
+                Concept Maps coming soon
+              </Text>
             </View>
           </AnimatedListItem>
         )
       case "summary-notes":
         return (
           <AnimatedListItem index={4}>
-            <View style={styles.placeholderContainer}>
-              <Feather name="file-text" size={48} color="#6b7280" />
-              <Text style={styles.placeholderText}>Summary Notes coming soon</Text>
+            <View style={[styles.placeholderContainer, { backgroundColor: theme.colors.background.secondary }]}>
+              <Feather name="file-text" size={48} color={theme.colors.text.tertiary} />
+              <Text style={[styles.placeholderText, { color: theme.colors.text.secondary }]}>
+                Summary Notes coming soon
+              </Text>
             </View>
           </AnimatedListItem>
         )
@@ -129,11 +137,11 @@ const ReviewScreen = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
       <Header />
       <ScrollView style={styles.scrollView}>
         <Animated.View style={headerAnimStyle}>
-          <Text style={styles.pageTitle}>Revise</Text>
+          <Text style={[styles.pageTitle, { color: theme.colors.primary }]}>Revise</Text>
         </Animated.View>
 
         <AnimatedListItem index={0}>
@@ -167,7 +175,6 @@ const ReviewScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0a0a1a",
   },
   scrollView: {
     flex: 1,
@@ -179,7 +186,6 @@ const styles = StyleSheet.create({
   },
   placeholderContainer: {
     height: 300,
-    backgroundColor: "#1a1a2e",
     borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
@@ -188,7 +194,6 @@ const styles = StyleSheet.create({
   },
   placeholderText: {
     fontSize: 18,
-    color: "#9ca3af",
     marginTop: 16,
     textAlign: "center",
   },
@@ -198,7 +203,6 @@ const styles = StyleSheet.create({
   pageTitle: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#a78bfa",
     marginTop: 16,
     marginBottom: 16,
   },

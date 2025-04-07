@@ -85,7 +85,7 @@ const SideMenu = ({ visible, onClose }) => {
   const menuItems = [
     { id: "home", label: "Home", icon: "home", type: "ionicons", screen: "Home" },
     { id: "learn", label: "Learn", icon: "book-outline", type: "ionicons", screen: "Learn" },
-    { id: "revise", label: "Revise", icon: "refresh-outline", type: "ionicons", screen: "Review" },
+    { id: "revise", label: "Revise", icon: "refresh-outline", type: "ionicons", screen: "Revise" },
     { id: "plan", label: "Plan", icon: "calendar-outline", type: "ionicons", screen: "Plan" },
     { id: "social", label: "Social", icon: "people-outline", type: "ionicons", screen: "Social" },
     { id: "settings", label: "Settings", icon: "settings-outline", type: "ionicons", screen: "Settings" },
@@ -110,7 +110,7 @@ const SideMenu = ({ visible, onClose }) => {
         }),
       ]).start(() => {
         // For tab screens, navigate to Main first, then to the specific tab
-        if (["Home", "Plan", "Learn", "Review", "Social"].includes(screen)) {
+        if (["Home", "Plan", "Learn", "Review", "Social", "Revise"].includes(screen)) {
           navigation.navigate("Main", { screen: screen })
         } else {
           navigation.navigate(screen)

@@ -6,7 +6,7 @@ export const navigateToCourse = (navigation, courseId) => {
     return
   }
 
-  navigation.navigate("CourseDetails", { courseId })
+  navigation.navigate("CourseDetail", { courseId })
 }
 
 export const navigateToAITutor = (navigation) => {

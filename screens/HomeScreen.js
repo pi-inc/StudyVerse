@@ -12,7 +12,7 @@ import AnimatedListItem from "../components/shared/AnimatedListItem"
 import SkipToContent from "../components/shared/SkipToContent"
 import { useNavigation } from "@react-navigation/native"
 import { useTheme } from "../context/ThemeContext"
-import { navigateToCourse, navigateToAITutor } from "../utils/navigation"
+import { navigateToAITutor } from "../utils/navigation"
 import { getContinueLearningCourses } from "../services/courseData"
 
 export default function HomeScreen() {
@@ -82,7 +82,9 @@ export default function HomeScreen() {
   }
 
   const handleCoursePress = (course) => {
-    navigateToCourse(navigation, course.id)
+    // Pass the complete course object instead of just the ID
+    console.log("HomeScreen - Navigating to course with full course object:", course)
+    navigation.navigate("CourseDetail", { course: course })
   }
 
   const headerAnimStyle = {

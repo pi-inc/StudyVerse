@@ -1,7 +1,7 @@
 "use client"
 
-import { useRef, useEffect } from "react"
-import { View, Text, ScrollView, SafeAreaView, Animated, Switch } from "react-native"
+import { useRef, useEffect, useCallback, useState } from "react"
+import { View, Text, ScrollView, SafeAreaView, Animated } from "react-native"
 import Header from "../components/shared/Header"
 import SettingsSection from "../components/settings/SettingsSection"
 import AnimatedListItem from "../components/shared/AnimatedListItem"
@@ -9,11 +9,52 @@ import { signOut } from "../services/auth"
 import { useTheme } from "../context/ThemeContext"
 import { useThemedStyles } from "../hooks/useThemedStyles"
 
+// Import the CustomToggleSwitch component at the top of the file
+import CustomToggleSwitch from "../components/shared/CustomToggleSwitch"
+
 const SettingsScreen = () => {
   const fadeAnim = useRef(new Animated.Value(0)).current
   const translateYAnim = useRef(new Animated.Value(30)).current
   const { theme, isDark, toggleTheme } = useTheme()
 
+  // Track the visual state of the toggle
+  const [isToggleOn, setIsToggleOn] = useState(isDark)
+
+  // Logging mechanism
+  const stepCounterRef = useRef(0)
+  const toggleCounterRef = useRef(0)
+  const toggleInProgressRef = useRef(false)
+
+  // Logging function
+  const logStateChange = useCallback(
+    (source) => {
+      const timestamp = new Date().toISOString().split("T")[1].slice(0, 12)
+      const stepNumber = stepCounterRef.current
+
+      console.log(
+        `[${timestamp}] [Toggle #${toggleCounterRef.current}] [Step ${stepNumber}] [${source}] isDark: ${isDark}, isToggleOn: ${isToggleOn}, inProgress: ${toggleInProgressRef.current}`,
+      )
+
+      // Increment step counter
+      stepCounterRef.current += 1
+    },
+    [isDark, isToggleOn],
+  )
+
+  // Log on initial render
+  useEffect(() => {
+    logStateChange("Initial Render")
+  }, [logStateChange])
+
+  // Sync isToggleOn with isDark when isDark changes externally
+  useEffect(() => {
+    if (!toggleInProgressRef.current) {
+      logStateChange("isDark Changed - External")
+      setIsToggleOn(isDark)
+    }
+  }, [isDark, logStateChange])
+
+  // Animation effect
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -36,6 +77,36 @@ const SettingsScreen = () => {
     } catch (error) {
       console.error("Sign out error:", error)
     }
+  }
+
+  // Handle theme toggle with proper visual feedback
+  const handleToggle = () => {
+    // Reset step counter and increment toggle counter for a new toggle action
+    stepCounterRef.current = 0
+    toggleCounterRef.current += 1
+
+    // Set toggle in progress flag
+    toggleInProgressRef.current = true
+
+    // Log before toggle
+    logStateChange("Toggle Pressed - Before")
+
+    // Call the theme toggle function
+    toggleTheme()
+
+    // Log after toggle
+    logStateChange("Toggle Pressed - After")
+
+    // Clear the toggle in progress flag after a delay
+    setTimeout(() => {
+      toggleInProgressRef.current = false
+
+      // Verify that the states are in sync
+      if (isDark !== isToggleOn) {
+        logStateChange("Toggle Sync Check")
+        setIsToggleOn(isDark)
+      }
+    }, 500)
   }
 
   // Use themed styles
@@ -107,11 +178,11 @@ const SettingsScreen = () => {
           title: "Dark Mode",
           icon: isDark ? "moon" : "sunny",
           customComponent: (
-            <Switch
-              value={isDark}
-              onValueChange={toggleTheme}
-              trackColor={{ false: "#e5e7eb", true: theme.colors.primary }}
-              thumbColor="#fff"
+            <CustomToggleSwitch
+              isOn={isDark}
+              onToggle={handleToggle}
+              activeColor={theme.colors.primary}
+              inactiveColor="#e5e7eb"
             />
           ),
         },
@@ -160,7 +231,7 @@ const SettingsScreen = () => {
       ],
     },
     {
-      id: "account",
+      id: "account_actions",
       title: "Account",
       icon: "person",
       description: "Manage your account settings",

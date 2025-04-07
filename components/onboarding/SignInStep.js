@@ -20,6 +20,7 @@ import { signInWithEmailAndPassword } from "firebase/auth"
 
 const { height } = Dimensions.get("window")
 
+// Update the component signature to accept auth state props
 const SignInStep = ({
   width,
   onNext,
@@ -28,6 +29,8 @@ const SignInStep = ({
   updateUserData = () => {},
   goToSignUp,
   goToForgotPassword,
+  isAuthenticated,
+  setIsAuthenticated,
 }) => {
   // Add these state variables at the top of the component
   const [isLoading, setIsLoading] = useState(false)
@@ -36,14 +39,20 @@ const SignInStep = ({
   const [emailError, setEmailError] = useState("")
   const [passwordError, setPasswordError] = useState("")
   const [isFormValid, setIsFormValid] = useState(false)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  // Remove local isAuthenticated state since we're using the prop
+
+  // Ensure userData has safe default values
+  const safeUserData = {
+    email: userData?.email || "",
+    password: userData?.password || "",
+    rememberMe: userData?.rememberMe || false,
+  }
 
   const validateEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!email) {
       setEmailError("Email is required")
       return false
-    } else if (!emailRegex.test(email)) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setEmailError("Please enter a valid email address")
       return false
     } else {
@@ -67,10 +76,10 @@ const SignInStep = ({
 
   useEffect(() => {
     // Validate form whenever userData changes
-    const isEmailValid = validateEmail(userData.email)
-    const isPasswordValid = validatePassword(userData.password)
+    const isEmailValid = validateEmail(safeUserData.email)
+    const isPasswordValid = validatePassword(safeUserData.password)
     setIsFormValid(isEmailValid && isPasswordValid)
-  }, [userData.email, userData.password])
+  }, [safeUserData.email, safeUserData.password])
 
   const handleEmailChange = (text) => {
     updateUserData({ email: text })
@@ -93,23 +102,32 @@ const SignInStep = ({
       setIsLoading(true)
       setAuthError(null)
 
+      // Ensure email and password are strings
+      const email = String(safeUserData.email || "")
+      const password = String(safeUserData.password || "")
+
+      console.log("Attempting sign in with:", email)
+
       // Attempt to sign in with Firebase
-      const userCredential = await signInWithEmailAndPassword(auth, userData.email, userData.password)
-      console.log("Sign-in attempted, waiting for auth state...")
+      const userCredential = await signInWithEmailAndPassword(auth, email, password)
+      console.log("Sign-in successful, user:", userCredential.user.uid)
 
       // Success - update user data with Firebase user info
-      updateUserData({
-        uid: userCredential.user.uid,
-        emailVerified: userCredential.user.emailVerified,
-      })
+      if (updateUserData) {
+        updateUserData({
+          uid: userCredential.user.uid,
+          emailVerified: userCredential.user.emailVerified,
+        })
+      }
 
-      // Set authenticated state
+      // Set authenticated state using the prop
       setIsAuthenticated(true)
+      console.log("Authentication state set to true")
 
-      // Important: Call onNext directly to advance to the next step
-      // This should happen regardless of any other state changes
-      onNext()
+      // DO NOT call onNext() here - let the Next button handle navigation
     } catch (error) {
+      console.error("Sign in error:", error)
+
       // Handle specific Firebase auth errors
       let errorMessage = "Sign in failed. Please try again."
 
@@ -172,7 +190,7 @@ const SignInStep = ({
     }
   }
 
-  // Only allow proceeding if authenticated
+  // Update the handleNext function to use the prop's isAuthenticated
   const handleNext = () => {
     if (isAuthenticated) {
       onNext()
@@ -298,6 +316,7 @@ const SignInStep = ({
             <Text style={styles.backButtonText}>Back</Text>
           </TouchableOpacity>
 
+          {/* Update the Next button to use the isAuthenticated prop */}
           <TouchableOpacity
             style={[
               styles.nextButton,

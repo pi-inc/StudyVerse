@@ -2,12 +2,14 @@
 
 import { useState } from "react"
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Animated, PanResponder } from "react-native"
+import { useTheme } from "../../context/ThemeContext"
 
 const { width } = Dimensions.get("window")
 
 const Flashcard = ({ question, answer, onSwipeLeft, onSwipeRight }) => {
   const [isFlipped, setIsFlipped] = useState(false)
   const [pan] = useState(new Animated.ValueXY())
+  const { theme } = useTheme()
 
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => true,
@@ -58,14 +60,28 @@ const Flashcard = ({ question, answer, onSwipeLeft, onSwipeRight }) => {
       ]}
       {...panResponder.panHandlers}
     >
-      <TouchableOpacity style={styles.card} activeOpacity={0.9} onPress={flipCard}>
-        <View style={styles.questionBadge}>
-          <Text style={styles.questionBadgeText}>{isFlipped ? "Answer" : "Question"}</Text>
+      <TouchableOpacity
+        style={[
+          styles.card,
+          {
+            backgroundColor: theme.colors.background.primary,
+            borderColor: theme.colors.border.light,
+          },
+        ]}
+        activeOpacity={0.9}
+        onPress={flipCard}
+      >
+        <View style={[styles.questionBadge, { backgroundColor: isFlipped ? theme.colors.info : theme.colors.primary }]}>
+          <Text style={[styles.questionBadgeText, { color: theme.colors.text.primary }]}>
+            {isFlipped ? "Answer" : "Question"}
+          </Text>
         </View>
 
-        <Text style={styles.cardText}>{isFlipped ? answer : question}</Text>
+        <Text style={[styles.cardText, { color: theme.colors.text.primary }]}>{isFlipped ? answer : question}</Text>
 
-        <Text style={styles.instructionText}>(Tap to flip, swipe to navigate)</Text>
+        <Text style={[styles.instructionText, { color: theme.colors.text.tertiary }]}>
+          (Tap to flip, swipe to navigate)
+        </Text>
       </TouchableOpacity>
     </Animated.View>
   )
@@ -79,13 +95,13 @@ const styles = StyleSheet.create({
   card: {
     width: width - 32,
     height: 250,
-    backgroundColor: "#0a0a1a",
     justifyContent: "center",
     alignItems: "center",
     padding: 24,
+    borderWidth: 1,
+    borderRadius: 12,
   },
   questionBadge: {
-    backgroundColor: "#7c3aed",
     borderRadius: 16,
     paddingHorizontal: 16,
     paddingVertical: 6,
@@ -94,18 +110,15 @@ const styles = StyleSheet.create({
   questionBadgeText: {
     fontSize: 14,
     fontWeight: "bold",
-    color: "#fff",
   },
   cardText: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#fff",
     textAlign: "center",
     marginBottom: 24,
   },
   instructionText: {
     fontSize: 14,
-    color: "#6b7280",
     textAlign: "center",
   },
 })
